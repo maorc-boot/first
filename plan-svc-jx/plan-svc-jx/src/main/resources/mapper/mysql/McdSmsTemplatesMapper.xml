@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.asiainfo.biapp.pec.plan.jx.smstemplates.dao.ISmsTemplateDao">
+
+
+
+    <select id="getSmsTemplateList" resultType="com.asiainfo.biapp.pec.plan.jx.smstemplates.model.McdSmsTemplatesInfo">
+
+        SELECT T.*, B.ADIV_NAME
+        FROM MTL_CHANNEL_BOSS_SMS_TEMPLATE T
+        left join MCD_ADIV_SMS_TPL_RELATION rel on t.TEMPLATE_ID = rel.TEMPLATE_ID
+        LEFT JOIN MCD_DIM_ADIV_INFO B ON B.ADIV_ID = rel.ADIV_ID
+        where rel.STATUS = 1
+        AND B.CHANNEL_ID = '910'
+
+        <if test="param.keyWords != null and param.keyWords != ''">
+            and (T.TEMPLATE_ID like concat('%', #{param.keyWords}, '%') or T.TEMPLATE_CONTENT like concat('%', #{param.keyWords}, '%'))
+        </if>
+
+        ORDER BY T.TEMPLATE_TYPE_ID, T.TEMPLATE_ID
+
+    </select>
+
+
+
+
+    <select id="smsTemplateOffline" parameterType="string" resultType="Integer" >
+
+        SELECT count(1) cnt
+        FROM MCD_CAMP_CHANNEL_LIST mcl
+        LEFT JOIN (SELECT CAMPSEG_ID FROM MCD_CAMP_DEF WHERE CAMPSEG_STAT_ID &lt; 90 ) mcd ON mcd.CAMPSEG_ID = mcl.CAMPSEG_ID
+        WHERE mcl.CHANNEL_ADIV_ID LIKE concat('%',#{templateId},'%')
+
+    </select>
+
+
+    <select id="getSmsBossTemplateTypes" parameterType="string" resultType="com.asiainfo.biapp.pec.plan.jx.smstemplates.model.McdDimSmsBossTemplateType" >
+
+       SELECT distinct smtype.TYPE_ID, smtype.TYPE_NAME, smtype.SORT_NUM
+       FROM MTL_CHANNEL_BOSS_SMS_TEMPLATE T
+       join MCD_ADIV_SMS_TPL_RELATION rel on t.Template_Id = rel.TEMPLATE_ID
+       join MCD_DIM_SMSBOSS_TEMPLATE_TYPE smtype on t.TEMPLATE_TYPE_ID = smtype.TYPE_ID
+       where   T.STATUS = 1
+
+       <if test="channelId != null and channelId != ''">
+           AND rel.CHANNEL_ID = #{channelId}
+       </if>
+
+        <if test="adivId != null and adivId != ''">
+            AND rel.ADIV_ID = #{adivId}
+        </if>
+       order by smtype.sort_num
+
+    </select>
+
+
+    <select id="getChannelBossSmsTemplates" parameterType="string" resultType="com.asiainfo.biapp.pec.plan.jx.smstemplates.model.McdSmsTemplatesInfo" >
+
+       SELECT T.*
+       FROM MTL_CHANNEL_BOSS_SMS_TEMPLATE T
+       left join MCD_ADIV_SMS_TPL_RELATION rel on t.Template_Id = rel.TEMPLATE_ID
+      where   rel.STATUS = 1
+       AND T.STATUS = 1
+        <if test="channelId != null and channelId != ''">
+            AND rel.CHANNEL_ID = #{channelId}
+        </if>
+
+        <if test="adivId != null and adivId != ''">
+            AND rel.ADIV_ID = #{adivId}
+        </if>
+
+         ORDER BY T.TEMPLATE_TYPE_ID, T.Template_Id
+
+    </select>
+
+
+</mapper>

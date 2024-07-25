@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.asiainfo.biapp.pec.plan.jx.intellpushprism.dao.IMcdPrismCampThemeDao">
+
+	<select id="searchThemeCampList" resultType="com.asiainfo.biapp.pec.plan.jx.camp.vo.McdPrismCampThemeVO">
+		SELECT 	theme.ID,
+				theme.THEME_ID,
+				theme.THEME_NAME,
+				theme.SCENE_CLASS,
+				theme.SCENE_TYPE,
+				theme.SCENE_DESC,
+				theme.CREATE_USER,
+<!--				uu.USER_NAME as createUserName,-->
+				theme.CREATE_TIME,
+				theme.UPDATE_TIME,
+				theme.STATUS
+		FROM mcd_prism_camp_theme theme
+		join mcd_prism_dim_scene scene on theme.THEME_ID = scene.THEME_ID and scene.LEAF_SCENE_FLAG = 1 and theme.STATUS = 1 and scene.STATUS = 1
+		join mcd_prism_scene_camp sc on scene.SCENE_ID = sc.SCENE_ID
+		join mcd_camp_def camp on sc.CAMPSEG_ROOT_ID = camp.CAMPSEG_ID
+<!--		join mcd_sys_user uu on theme.CREATE_USER = uu.USER_ID-->
+		<where>
+			<if test="param.channelId != null and param.channelId != ''">
+				and sc.CAMPSEG_ROOT_ID in (
+					select distinct CAMPSEG_ROOT_ID from mcd_camp_channel_list cl
+					where cl.CHANNEL_ID = #{param.channelId}
+				)
+			</if>
+<!--			<if	test="param.campKeywords != null and param.campKeywords != ''">-->
+<!--				and (camp.CAMPSEG_ID like concat('%', #{param.campKeywords}, '%') or camp.CAMPSEG_NAME like concat('%', #{param.campKeywords}, '%'))-->
+<!--			</if>-->
+			<if test="param.themeKeywords != null and param.themeKeywords != ''">
+				and (theme.THEME_ID like concat('%', #{param.themeKeywords}, '%') or theme.THEME_NAME like concat('%', #{param.themeKeywords}, '%'))
+			</if>
+<!--			<if	test="param.themeCreateTime != null and param.themeCreateTime != ''">-->
+<!--				and theme.CREATE_TIME &gt;= #{param.themeCreateStartTime} and theme.CREATE_TIME &lt;= #{param.themeCreateEndTime}-->
+<!--			</if>-->
+<!--			<if	test="param.themeUpdateTime != null and param.themeUpdateTime != ''">-->
+<!--				and theme.UPDATE_TIME &gt;= #{param.themeUpdateStartTime} and theme.CREATE_TIME &lt;= #{param.themeUpdateEndTime}-->
+<!--			</if>-->
+            <if test="param.campStartDay != null and param.campStartDay != ''">
+                and (camp.START_DATE<![CDATA[>=]]>#{param.campStartDayStart} and camp.START_DATE<![CDATA[<=]]>#{param.campStartDayEnd})
+            </if>
+            <if test="param.campEndDay != null and param.campEndDay != ''">
+                and (camp.END_DATE<![CDATA[>=]]>#{param.campEndDayStart} and camp.END_DATE<![CDATA[<=]]>#{param.campEndDayEnd})
+            </if>
+			<if	test="param.isSelectMy == 1 and param.userId != null and param.userId != ''">
+				AND camp.CREATE_USER_ID = #{param.userId}
+			</if>
+<!--			<if	test="param.sceneClass != null and param.sceneClass != '' or param.sceneClass == 0">-->
+<!--				and theme.SCENE_CLASS = #{param.sceneClass}-->
+<!--			</if>-->
+<!--			<if	test="param.sceneType != null and param.sceneType != '' or param.sceneClass == 0">-->
+<!--				and theme.SCENE_TYPE = #{param.sceneType}-->
+<!--			</if>-->
+<!--			<if	test="param.sceneFissionType != null and param.sceneFissionType != '' or param.sceneFissionType == 0">-->
+<!--				and scene.SCENE_FISSION_TYPE = #{param.sceneFissionType}-->
+<!--			</if>-->
+<!--			<if	test="param.sceneId != null and param.sceneId != ''">-->
+<!--				and scene.SCENE_ID = #{param.sceneId}-->
+<!--			</if>-->
+<!--			<if	test="param.sceneName != null and param.sceneName != ''">-->
+<!--				and scene.SCENE_NAME like concat('%', #{param.sceneName}, '%')-->
+<!--			</if>-->
+			<if	test="param.campsegStatId != null and param.campsegStatId != ''">
+				and camp.CAMPSEG_STAT_ID = #{param.campsegStatId}
+			</if>
+		</where>
+		group by theme.ID
+		ORDER BY
+		<choose>
+			<when test="param.orderColumn != null and param.orderColumn != ''">
+				${param.orderColumn}
+			</when>
+			<otherwise>
+				theme.CREATE_TIME
+			</otherwise>
+		</choose>
+		<if	test="param.order == 1">
+			DESC
+		</if>
+	</select>
+
+	<select id="searchCampListByTheme" resultType="com.asiainfo.biapp.pec.plan.jx.camp.vo.SceneCampVO">
+		SELECT camp.CREATE_TIME, camp.CAMPSEG_NAME, camp.CAMPSEG_ID, camp.PREVIEW_CAMP,
+			   camp.START_DATE, camp.END_DATE, camp.CAMPSEG_STAT_ID, camp.CITY_ID, scene.SCENE_ID, scene.SCENE_NAME, scene.THEME_ID,
+			   case camp.CAMPSEG_STAT_ID
+			   when 20 then '草稿'
+			   when 31 then '预演中'
+			   when 32 then '预演完成'
+			   when 33 then '预演失败'
+			   when 40 then '审批中'
+			   when 41 then '审批退回'
+			   when 50 then '待执行'
+			   when 52 then '待发布'
+			   when 54 then '执行中'
+			   when 59 then '暂停'
+			   when 90 then '完成'
+			   when 91 then '终止' end as campsegStatName
+		FROM mcd_prism_dim_scene scene JOIN mcd_prism_scene_camp sc ON scene.SCENE_ID = sc.SCENE_ID
+				AND scene.THEME_ID in
+				<foreach collection="themeIdList" item="themeId" open="(" close=")" separator=",">
+					#{themeId}
+				</foreach>
+				AND scene.LEAF_SCENE_FLAG = 1
+		    	JOIN mcd_camp_def camp ON camp.CAMPSEG_ID = sc.CAMPSEG_ROOT_ID
+<!--		    	AND camp.CAMPSEG_ROOT_ID = '0'-->
+<!--				 JOIN mcd_sys_user uu ON uu.USER_ID = camp.CREATE_USER_ID-->
+<!--				 JOIN mcd_sys_city mdc on mdc.city_id = camp.city_id-->
+<!--		<where>-->
+<!--			<if	test="param.isSelectMy == 1 and param.userId != null and param.userId != ''">-->
+<!--				AND camp.CREATE_USER_ID = #{param.userId}-->
+<!--			</if>-->
+<!--			<if test="param.campStartDay != null and param.campStartDay != ''">-->
+<!--				AND camp.START_DATE &gt;= #{param.campStartDayStart} AND camp.START_DATE &lt;= #{param.campStartDayEnd}-->
+<!--			</if>-->
+<!--			<if test="param.campEndDay != null and param.campEndDay != ''">-->
+<!--				AND camp.END_DATE &gt;= #{param.campEndDayStart} AND camp.END_DATE &lt;= #{param.campEndDayEnd}-->
+<!--			</if>-->
+<!--			<if	test="param.campsegStatId != null and param.campsegStatId != '' or param.campsegStatId == 0">-->
+<!--				AND camp.CAMPSEG_STAT_ID = #{param.campsegStatId}-->
+<!--			</if>-->
+<!--			<if test="param.channelId != null and param.channelId != ''">-->
+<!--				AND camp.CAMPSEG_ID IN (-->
+<!--				    SELECT cl.CAMPSEG_ROOT_ID FROM mcd_camp_channel_list cl-->
+<!--				                              WHERE camp.CAMPSEG_ID = cl.CAMPSEG_ROOT_ID AND cl.CHANNEL_ID = #{param.channelId}-->
+<!--				)-->
+<!--			</if>-->
+<!--			<if	test="param.campKeywords != null and param.campKeywords != ''">-->
+<!--				AND (camp.CAMPSEG_NAME LIKE CONCAT('%', #{param.campKeywords}, '%') OR camp.CAMPSEG_ID LIKE CONCAT('%', #{param.campKeywords}, '%'))-->
+<!--			</if>-->
+<!--		</where>-->
+<!--		ORDER BY-->
+<!--		<choose>-->
+<!--			<when test="param.orderColumn != null and param.orderColumn != ''">-->
+<!--				${param.orderColumn}-->
+<!--			</when>-->
+<!--			<otherwise>-->
+<!--				camp.CREATE_TIME-->
+<!--			</otherwise>-->
+<!--		</choose>-->
+<!--		<if test="param.order == 1">-->
+<!--			DESC-->
+<!--		</if>-->
+	</select>
+
+	<select id="searchAllCampStatAndPreviewByTheme" resultType="com.asiainfo.biapp.pec.plan.jx.camp.vo.ThemeCampStatDetail">
+		select sc.CAMPSEG_ROOT_ID, camp.CAMPSEG_STAT_ID, ifnull(camp.PREVIEW_CAMP, 0) previewCamp
+		from mcd_prism_camp_theme theme join mcd_prism_dim_scene scene on theme.THEME_ID = scene.THEME_ID and scene.LEAF_SCENE_FLAG = 1 and theme.STATUS = 1 and scene.STATUS = 1
+			join mcd_prism_scene_camp sc on scene.SCENE_ID = sc.SCENE_ID
+			join mcd_camp_def camp on sc.CAMPSEG_ROOT_ID = camp.CAMPSEG_ID
+		where theme.THEME_ID = #{param}
+	</select>
+
+	<select id="listChannelIdByThemeId" resultType="com.asiainfo.biapp.pec.plan.jx.camp.vo.ThemeCampStatDetail">
+        select theme.THEME_ID, group_concat(mccl.CHANNEL_ID) CHANNEL_ID, sc.CAMPSEG_ROOT_ID, camp.CAMPSEG_STAT_ID, ifnull(camp.PREVIEW_CAMP, 0) previewCamp
+            from MCD_PRISM_CAMP_THEME theme
+                left join MCD_PRISM_DIM_SCENE scene on theme.THEME_ID = scene.THEME_ID and scene.LEAF_SCENE_FLAG = 1 and theme.STATUS = 1
+                left join MCD_PRISM_SCENE_CAMP sc on scene.SCENE_ID = sc.SCENE_ID and scene.STATUS = 1
+                left join mcd_camp_channel_list mccl on sc.CAMPSEG_ROOT_ID = mccl.CAMPSEG_ROOT_ID
+                left join mcd_camp_def camp on sc.CAMPSEG_ROOT_ID = camp.CAMPSEG_ID
+                where theme.THEME_ID in
+                <foreach collection="themeIdList" item="themeId" open="(" close=")" separator=",">
+					#{themeId}
+				</foreach>
+				group by theme.THEME_ID
+    </select>
+
+</mapper>

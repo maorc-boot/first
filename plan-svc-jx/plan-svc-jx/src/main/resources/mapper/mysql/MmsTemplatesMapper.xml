@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.asiainfo.biapp.pec.plan.jx.mmstemplates.dao.IMcdMmsTemplatesServiceDao">
+
+    <select id="queryMmsTemplateCount" parameterType="string" resultType="int">
+        SELECT count(1) FROM MTL_CHANNEL_BOSS_MMS_TEMPLATE T where 1 = 1
+        <if test="keyWords !='' and keyWords != null ">
+            AND (T.TEMPLATE_ID LIKE concat('%',#{keyWords},'%') OR T.TEMPLATE_SUBJECT LIKE concat('%',#{keyWords},'%'))
+        </if>
+    </select>
+
+    <select id="queryMmsTemplate" parameterType="string"  resultType="com.asiainfo.biapp.pec.plan.jx.mmstemplates.vo.McdMmsTemplate">
+        select TEMPLATE_ID id,TEMPLATE_NAME templateName,TEMPLATE_SUBJECT templateSubject,MMS_ADDRESS mmsAddress,
+        STATUS status,UPDATE_TIME time from MTL_CHANNEL_BOSS_MMS_TEMPLATE where 1=1
+        <if test="keyWords !='' and keyWords != null ">
+            AND (TEMPLATE_ID LIKE concat('%',#{keyWords},'%') OR TEMPLATE_SUBJECT LIKE concat('%',#{keyWords},'%'))
+        </if>
+        ORDER BY UPDATE_TIME DESC
+        limit ${pageNum},${pageSize}
+    </select>
+
+    <update id="updateMmsTemplate" parameterType="string">
+        UPDATE MTL_CHANNEL_BOSS_MMS_TEMPLATE SET TEMPLATE_ID = #{mmstaskNum},TEMPLATE_SUBJECT = #{mmsTemplateSubject},
+        TEMPLATE_NAME = #{mmsTemplateSubject},MMS_ADDRESS = #{mmsAddress} ,UPDATE_TIME = curdate() WHERE TEMPLATE_ID = #{id}
+    </update>
+
+    <insert id="saveMmsTemplate" parameterType="com.asiainfo.biapp.pec.plan.jx.mmstemplates.vo.McdMmsTemplate">
+        INSERT INTO MTL_CHANNEL_BOSS_MMS_TEMPLATE (TEMPLATE_ID, TEMPLATE_NAME, TEMPLATE_SUBJECT, MMS_ADDRESS, STATUS)
+        VALUES
+        (#{template.id}, #{template.templateName}, #{template.templateSubject}, #{template.mmsAddress}, #{template.status});
+    </insert>
+
+    <select id="getMmsTemplateStatus" parameterType="string" resultType="int">
+        SELECT count(1) FROM (SELECT * FROM MCD_CAMP_DEF WHERE CAMPSEG_STAT_ID <![CDATA[ < ]]> 90) mcd
+        LEFT JOIN mcd_camp_channel_ext mcxj ON mcd.CAMPSEG_ID = mcxj.CAMPSEG_ID
+        WHERE mcxj.COLUMN_EXT1 = #{templateId} or mcxj.COLUMN_EXT2 = #{templateId} or mcxj.COLUMN_EXT3 = #{templateId}
+        or mcxj.COLUMN_EXT4 = #{templateId} or mcxj.COLUMN_EXT5 = #{templateId};
+    </select>
+
+    <update id="removeMmsTemplate" parameterType="string">
+        delete from MTL_CHANNEL_BOSS_MMS_TEMPLATE where TEMPLATE_ID = #{id}
+    </update>
+
+</mapper>

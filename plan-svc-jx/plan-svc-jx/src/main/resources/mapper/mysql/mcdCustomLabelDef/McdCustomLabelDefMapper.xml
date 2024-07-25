@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.asiainfo.biapp.pec.plan.jx.hmh5.transplant.mcdCustomLabelDef.mapper.McdCustomLabelDefMapper">
+    <select id="selectSelfDefinedLabelConfDetail"
+            resultType="com.asiainfo.biapp.pec.plan.jx.hmh5.transplant.mcdCustomLabelDef.service.impl.resultInfo.SelfDefinedLabelResultConfInfo">
+        select
+        LB.CUSTOM_LABEL_ID,
+        lb.CUSTOM_LABEL_NAME,
+        lb.CREATE_USER_ID,
+        CT.CITY_NAME,
+        case lb.APPROVE_STATUS
+        when 50 then '待提审'
+        when 51 then '审核中'
+        when 52 then '已通过'
+        when 53 then '未通过' end APPROVE_STATUS,
+        decode(re.MODULE_ID, '0', '下线', '上线') onlineStatus,
+        RE.MODULE_NAME,
+        RE.SORT_NUM,
+        lb.CREATE_TIME,
+        lb.CUSTOM_LABEL_DESC
+        from MCD_CUSTOM_LABEL_DEF LB
+        left join (select LB.CUSTOM_LABEL_ID,
+        listagg(NVL(RE.MODULE_ID, '0'), '/') within group(order by re.MODULE_ID) MODULE_ID,
+        LISTAGG(decode(RE.MODULE_ID,1,'首页-客户分布',2,'关怀短信',3,'重点营销','0'),'/') WITHIN GROUP(ORDER BY RE.SORT_NUM asc) as MODULE_NAME,
+        listagg(RE.SORT_NUM, ',') within group(order by re.SORT_NUM asc) SORT_NUM
+        from MCD_CUSTOM_LABEL_DEF LB
+        left join MCD_CUSTOM_LABEL_REL RE on LB.CUSTOM_LABEL_ID = RE.CUSTOM_LABEL_ID
+        where LB.DATA_STATUS = 1
+        group by LB.CUSTOM_LABEL_ID) RE on LB.CUSTOM_LABEL_ID = RE.CUSTOM_LABEL_ID
+        left join mcd_dim_city CT on LB.CITY_ID = CT.CITY_ID
+        where LB.DATA_STATUS = 1
+        <if test="param.customLabelCode != null">
+            and lb.CUSTOM_LABEL_ID like '%'||#{param.customLabelCode}||'%'
+        </if>
+        <if test="param.customLabelName != null">
+            and lb.CUSTOM_LABEL_NAME like '%'||#{param.customLabelName}||'%'
+        </if>
+        <if test="param.cityId != null">
+            and lb.CITY_ID = #{param.cityId}
+        </if>
+        <if test="param.createTimeStart != null">
+            and lb.CREATE_TIME &gt;= #{param.createTimeStart}
+        </if>
+        <if test="param.createTimeEnd != null">
+            and lb.CREATE_TIME &lt;= #{param.createTimeEnd}
+        </if>
+        <if test="param.approveStatus != null">
+            and lb.APPROVE_STATUS = #{param.approveStatus}
+        </if>
+        <choose>
+            <when test="param.isOnline == '0'">
+                and re.MODULE_ID = '0';
+            </when>
+            <when test="param.isOnline == '1'">
+                and re.MODULE_ID != '0';
+            </when>
+        </choose>
+        <if test="param.moduleId != null">
+            and instr(re.MODULE_ID,#{param.moduleId}) > 0
+        </if>
+
+    </select>
+
+    <select id="selectSelfDefinedLabel"
+            resultType="com.asiainfo.biapp.pec.plan.jx.hmh5.transplant.mcdCustomLabelDef.service.impl.resultInfo.SelfDefinedLabelResultInfo">
+        select mcld.CUSTOM_LABEL_ID,mcld.CUSTOM_LABEL_NAME from mcd_custom_label_def mcld
+        where mcld.CITY_ID = #{cityId}
+        <if test="customLabelName != null">
+            and mcld.CUSTOM_LABEL_NAME like concat('%',#{customLabelName},'%')
+        </if>
+    </select>
+
+    <select id="selectSelfDefinedLabelConf"
+            resultType="com.asiainfo.biapp.pec.plan.jx.hmh5.transplant.mcdCustomLabelDef.service.impl.resultInfo.SelfDefinedLabelResultInfo">
+        select
+               mcld.CUSTOM_LABEL_ID,
+               mcld.CUSTOM_LABEL_NAME,
+               case mclr.MODULE_ID
+                   when 1 then 'customerDistributes'
+                   when 2 then 'careMessages'
+                   when 3 then 'majorMarketings'
+                   when 4 then 'daiweiMessages'
+                   end moduleName
+        from mcd_custom_label_def mcld,
+             mcd_custom_label_rel mclr
+        where mcld.CUSTOM_LABEL_ID = mclr.CUSTOM_LABEL_ID
+          and mcld.CITY_ID = #{cityId}
+    </select>
+
+    <select id="selectSelfDefinedLabelByIds"
+            resultType="com.asiainfo.biapp.pec.plan.jx.hmh5.transplant.mcdCustomLabelDef.service.impl.resultInfo.SelfDefinedLabelResultInfo">
+        select mcld.CUSTOM_LABEL_ID,mcld.CUSTOM_LABEL_NAME from mcd_custom_label_def mcld
+        where mcld.CITY_ID = #{cityId} and mcld.CUSTOM_LABEL_ID in
+        <foreach collection="labelIds" item="labelId" open="(" separator="," close=")">
+            #{labelId}
+        </foreach>
+    </select>
+
+    <delete id="deleteByLabelId">
+        delete FROM MCD_CUSTOM_LABEL_REL M WHERE M.CUSTOM_LABEL_ID = #{labelId};
+        delete FROM MCD_CUSTOM_LABEL_DEF M WHERE M.CUSTOM_LABEL_ID = #{labelId};
+        delete FROM MCD_CUSTOM_LABEL_TAB_LIST M WHERE M.CUSTOM_LABEL_ID = #{labelId};
+    </delete>
+
+    <delete id="deleteLabelCol">
+        ALTER TABLE MCD_CUSTOM_LABEL_${cityId}_USER DROP column ${labelId}
+    </delete>
+
+</mapper>

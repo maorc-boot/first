@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.asiainfo.biapp.pec.plan.jx.channelconfig.dao.IMcdSensitiveDao">
+
+    <select id="getOnlineChannels" resultType="com.asiainfo.biapp.pec.plan.jx.channelconfig.vo.McdChannel">
+        SELECT CHANNEL_ID as channelId,CHANNEL_NAME as channelName,IOP_CHANNEL_NAME as iopChannelName,
+        CHANNEL_CODE as channelCode,DISPLAY_ORDER as displayOrder,PARENT_ID as parentId
+        FROM MCD_DIM_CHANNEL D WHERE ONLINE_STATUS = 1 AND PARENT_ID IS NULL ORDER BY D.DISPLAY_ORDER
+    </select>
+
+    <select id="queryChannelSettingCnt" parameterType="string" resultType="int">
+         select count(1) from mcd_sys_dic t  where t.dic_profile='jx' and t.dic_key like #{keys}
+    </select>
+
+    <select id="queryChannelSetting" parameterType="string" resultType="map">
+        select t.*,ch.CHANNEL_NAME,cgd.CUSTOM_GROUP_NAME,cgd.CUSTOM_GROUP_DESC,cgd.CREATE_USER_ID,
+        cgd.CREATE_TIME,cgd.CUSTOM_NUM,(case when t.DIC_CREATE_USER = #{id} then 1 else 0 end ) IS_CREATOR
+        from mcd_sys_dic t
+         left join mcd_dim_channel ch on t.DIC_DATA_PVALUE=ch.CHANNEL_ID
+         left join MCD_CUSTGROUP_DEF cgd on t.DIC_VALUE=cgd.CUSTOM_GROUP_ID
+         where t.dic_profile='jx' and t.dic_key like #{keys}  order by t.DIC_CREATE_TIME desc
+         limit ${pageNum},${pageSize}
+    </select>
+
+    <insert id="saveConfig" parameterType="string" >
+        INSERT INTO mcd_sys_dic (DIC_PROFILE, DIC_KEY, DIC_VALUE, DIC_NAME, DIC_DESC, DIC_ORDER, DIC_CREATE_USER,
+                                DIC_CREATE_TIME)
+        VALUES ('jx',#{keys},#{khq},'渠道敏感客户群',#{desc},'1',#{id},curdate());
+    </insert>
+
+    <select id="getMoreMyCustomCount" parameterType="string" resultType="int">
+        SELECT count(1) FROM MCD_CUSTGROUP_DEF cgd WHERE (CREATE_USER_ID = #{id} or CREATE_USER_ID = '0' or
+        cgd.custom_group_id in (select custom_group_id from mcd_custgroup_push where create_push_target_id = #{id}))
+        and custom_status_id not in (2, 9)
+        <if test="#{keyWords} !='' and #{keyWords} !=null ">
+            AND (CUSTOM_GROUP_NAME LIKE concat('%',#{keyWords},'%') OR CUSTOM_GROUP_ID LIKE concat('%',#{keyWords},'%') )
+        </if>
+        and cgd.FAIL_TIME >= curdate() or Fail_Time is null
+    </select>
+
+    <select id="getMoreMyCustom" parameterType="string" resultType="com.asiainfo.biapp.pec.plan.jx.channelconfig.vo.McdCustgroup">
+        SELECT cgd.* FROM MCD_CUSTGROUP_DEF cgd WHERE (CREATE_USER_ID = #{id} or CREATE_USER_ID = '0' or
+        cgd.custom_group_id in (select custom_group_id from mcd_custgroup_push where create_push_target_id = #{id}))
+        and custom_status_id not in (2, 9)
+        <if test="keyWords !='' and keyWords != null ">
+            AND (CUSTOM_GROUP_NAME LIKE concat('%',#{keyWords},'%') OR CUSTOM_GROUP_ID LIKE concat('%',#{keyWords},'%') )
+        </if>
+        and cgd.FAIL_TIME >= curdate() or Fail_Time is null
+        order by cgd.CREATE_TIME desc
+        limit ${pageNum},${pageSize}
+    </select>
+
+    <update id="deleteSettings" parameterType="string">
+        delete from mcd_sys_dic where dic_profile='jx' and dic_key= #{keys}
+    </update>
+</mapper>

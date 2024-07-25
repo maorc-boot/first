@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.asiainfo.biapp.pec.plan.jx.custgroup.dao.ICustGroupInfoDao">
+
+
+    <select id="isCustomDeletable" parameterType="string" resultType="map">
+        select mcc.CUSTGROUP_ID
+        from mcd_camp_def mcs
+        left join mcd_camp_channel_list mcc
+         on mcs.campseg_id = mcc.CAMPSEG_PID
+        where mcc.CUSTGROUP_ID = #{custGroupId}
+          and mcs.CAMPSEG_STAT_ID NOT IN (91,90)
+        union select custom_group_id from mcd_custgroup_def where create_user_id != #{userId} and custom_group_id = #{custGroupId}
+        union select custom_group_id from mcd_custgroup_push_log where PUSH_TARGET_USER != #{userId} and custom_group_id = #{custGroupId}
+
+    </select>
+
+    <select id="searchCustGroup" resultType="com.asiainfo.biapp.pec.plan.jx.custgroup.model.McdCustgroupDefInfo">
+        select t.CUSTOM_GROUP_ID,
+        t.CUSTOM_GROUP_NAME,
+        u.USER_NAME CREATE_USER_ID,
+        IFNULL(t.ACTUAL_CUSTOM_NUM, 0) ACTUAL_CUSTOM_NUM,
+        t.CUSTOM_NUM,
+        case t.custom_status_id
+        when 0 then '无效'
+        when 1 then '有效'
+        when 3 then '提取处理中'
+        when 4 then '提取失败'
+        when 9 then '客户群导入失败'
+        when 10 then '入库异常' end as   status_name,
+        case t.update_cycle
+        when 1 then '一次性'
+        when 2 then '月'
+        when 3 then '日' end     as   UPDATE_CYCLE_NAME,
+        t.FILE_NAME,
+        t.DATA_DATE,
+        t.CREATE_TIME,
+        t.UPDATE_TIME,
+        t.EFFECTIVE_TIME,
+        t.FAIL_TIME,
+        t.UPDATE_STATUS as updateStatus
+
+        from mcd_custgroup_def t
+        LEFT JOIN mcd_sys_user u on t.CREATE_USER_ID = u.USER_ID
+        where 1=1
+        <if test="param.keyWords != null and param.keyWords != ''">
+            and (t.custom_group_id like concat('%', #{param.keyWords}, '%') or t.custom_group_name like concat('%', #{param.keyWords}, '%'))
+        </if>
+
+        <if test="param.contentType != null and param.contentType != '' and param.contentType =='ALL-CUSTOM'.toString()">
+            and t.custom_status_id != '2'
+        </if>
+
+        <if test="param.contentType != null and param.contentType != '' and param.contentType =='MY-CUSTOM'.toString()">
+            and t.custom_status_id != '2'
+            and (t.create_user_id = #{param.userId} or
+            t.custom_group_id in (select custom_group_id from mcd_custgroup_push_log where PUSH_TARGET_USER =  #{param.userId}))
+        </if>
+
+
+        <if test="param.contentType != null and param.contentType != '' and param.contentType =='ABNORMAL-CUSTOM'.toString()">
+            and t.custom_group_id in (select distinct mcc.custgroup_id
+            from mcd_camp_def mcs,
+            mcd_camp_channel_list mcc
+            where mcs.CAMPSEG_ID = mcc.CAMPSEG_PID
+            and mcs.campseg_stat_id in ('50', '54', '59'))
+            and ( t.custom_status_id not in ('1','2') or t.custom_status_id in ( '9', '10', '4' ))
+            or t.custom_num='0'
+        </if>
+
+        order by t.UPDATE_TIME desc
+
+    </select>
+
+
+
+    <select id="searchCycleCustGroups" resultType="com.asiainfo.biapp.pec.plan.jx.custgroup.model.McdCustgroupDefInfo">
+        select t.CUSTOM_GROUP_ID,
+        t.CUSTOM_GROUP_NAME,
+        t.CREATE_USER_ID,
+        IFNULL(t.ACTUAL_CUSTOM_NUM, 0) ACTUAL_CUSTOM_NUM,
+        t.CUSTOM_NUM,
+        case t.custom_status_id
+        when 0 then '无效'
+        when 1 then '有效'
+        when 3 then '提取处理中'
+        when 4 then '提取失败'
+        when 9 then '客户群导入失败'
+        when 10 then '入库异常' end as   status_name,
+        case t.update_cycle
+        when 1 then '一次性'
+        when 2 then '月'
+        when 3 then '日' end     as   UPDATE_CYCLE_NAME,
+        t.FILE_NAME,
+        t.DATA_DATE,
+        t.CREATE_TIME,
+        t.EFFECTIVE_TIME,
+        t.UPDATE_STATUS as updateStatus,
+        t.FAIL_TIME
+
+        from mcd_custgroup_def t
+       where t.FAIL_TIME > now() and t.UPDATE_CYCLE in (2,3)
+
+    </select>
+
+    <select id="searchCustomDetail" parameterType="string" resultType="com.asiainfo.biapp.pec.plan.jx.custgroup.model.McdCustgroupDefInfo">
+
+        select
+        t1.CUSTOM_GROUP_ID,
+       t1.CUSTOM_GROUP_NAME,
+       IFNULL(t1.ACTUAL_CUSTOM_NUM, 0) ACTUAL_CUSTOM_NUM,
+       t1.CUSTOM_NUM,
+       t1.FILE_NAME,
+       t1.CUSTOM_GROUP_DESC,
+       t1.RULE_DESC,
+       t1.DATA_DATE,
+       t1.CREATE_TIME,
+       t1.EFFECTIVE_TIME,
+       t1.FAIL_TIME,
+       t1.UPDATE_STATUS as updateStatus,
+       u.USER_NAME CREATE_USER_ID,
+       case t1.update_cycle when 2 then '月' when 3 then '日' else '一次性' end as update_cycle_name,
+       case  t1.custom_status_id
+         when 0 then '无效'
+         when 1 then '有效'
+         when 3 then '提取处理中'
+         when 4 then '提取失败'
+         when 9 then '客户群导入失败'
+         when 10 then '入库时异常'
+           end as status_name,
+        t2.date_time
+      from (
+      select * from mcd_custgroup_def cus where cus.custom_group_id = #{custGroupId}) t1
+      left join mcd_sys_user u on t1.CREATE_USER_ID = u.USER_ID
+       left join (
+                 select CUSTOM_GROUP_ID,MAX(CREATE_TIME) date_time
+                 from mcd_custgroup_push_log group by CUSTOM_GROUP_ID
+                 ) t2 on t1.custom_group_id = t2.custom_group_id
+    </select>
+
+
+</mapper>

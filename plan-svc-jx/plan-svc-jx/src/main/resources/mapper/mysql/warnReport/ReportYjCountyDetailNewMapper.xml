@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.asiainfo.biapp.pec.plan.jx.hmh5.transplant.warnReport.mapper.ReportYjCountyDetailNewMapper">
+
+    <select id="selectCountyWarnReport"
+            resultType="com.asiainfo.biapp.pec.plan.jx.hmh5.transplant.warnReport.service.impl.resultInfo.ReportYjCountyResultInfo">
+        select COUNTY_ID, COUNTY_NAME, ALARM_NAME, RW, DR_JC, DR_JJ, JC_NUM, JJ_NUM,
+        YBL from mcd_report.report_yj_county_detail_new
+        rycdn
+        <choose>
+            <when test="statDate != null">
+                where to_date(rycdn.STAT_DATE, 'yyyy/mm/dd') = to_date(#{statDate}, 'yyyy/mm/dd')
+            </when>
+            <otherwise>
+                order by rycdn.STAT_DATE desc
+            </otherwise>
+        </choose>
+    </select>
+
+    <!--LinkedHashMap才能保证输出顺序为查询顺序，DATE_FORMAT将日期格式化为字符串，否则查询结果会加上时间-->
+    <select id="exportCountyWarnReport"
+            resultType="java.util.LinkedHashMap">
+        select CITY_ID 地市编号, CITY_NAME 地市名称,COUNTY_ID 区县编号, COUNTY_NAME 区县名称, ALARM_NAME 预警类型, RW 近30天任务量,
+        DR_JC 当日接触量, DR_JJ 当日解决量, JC_NUM 近30天接触量, JJ_NUM 近30天解决量, YBL 业务办理量, to_date(STAT_DATE, 'yyyy/mm/dd') 导出日期
+        from mcd_report.report_yj_county_detail_new rycdn
+        <choose>
+            <when test="statDate != null">
+                where to_date(rycdn.STAT_DATE, 'yyyy/mm/dd') = to_date(#{statDate}, 'yyyy/mm/dd')
+            </when>
+            <otherwise>
+                order by rycdn.STAT_DATE desc
+            </otherwise>
+        </choose>
+    </select>
+
+
+</mapper>

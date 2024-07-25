@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.asiainfo.biapp.pec.plan.jx.link.dao.LinkDao">
+
+    <select id="searchAllLink" parameterType="map" resultType="com.asiainfo.biapp.pec.plan.jx.link.vo.Link">
+        SELECT A.ID,A.NAME,A.URL,A.PLAN_ID,A.PLAN_NAME,A.STATUS,A.CREATE_DATE,A.CREATOR,A.DESCRIPTION
+        FROM MCD_LINK_LIBRARY A WHERE (A.STATUS = '1' OR A.STATUS = '3')
+        <if test="map.Id !='' and map.Id != null ">
+            and A.ID like concat('%',#{map.Id},'%')
+        </if>
+
+        <if test="map.Name !='' and map.Name != null ">
+            and A.NAME like concat('%',#{map.Name},'%')
+        </if>
+
+        <if test="map.planId !='' and map.planId != null ">
+            and A.planId like concat('%',#{map.planId},'%')
+        </if>
+
+        <if test="map.planName !='' and map.planName != null ">
+            and A.planName like concat('%',#{map.planName},'%')
+        </if>
+
+        <if test="map.url !='' and map.url != null ">
+            and A.url like concat('%',#{map.url},'%')
+        </if>
+
+        <if test="map.creator !='' and map.creator != null ">
+            and A.CREATOR like concat('%',#{map.creator},'%')
+        </if>
+
+        <if test="map.createDateS !='' and map.createDateS != null">
+            and A.CREATE_DATE > #{map.createDateS}
+        </if>
+        <if test=" map.createDateE !='' and map.createDateE != null">
+            and #{map.createDateE}  > A.CREATE_DATE
+        </if>
+        order by  A.CREATE_DATE desc
+        limit ${map.pageNum},${map.pageSize}
+    </select>
+
+    <select id="tosizeAllLinik" parameterType="map" resultType="int">
+        SELECT count(*) FROM MCD_LINK_LIBRARY A WHERE (A.STATUS = '1' OR A.STATUS = '3')
+        <if test="map.Id !='' and map.Id != null ">
+            and A.ID like concat('%',#{map.Id},'%')
+        </if>
+
+        <if test="map.Name !='' and map.Name != null ">
+            and A.NAME like concat('%',#{map.Name},'%')
+        </if>
+
+        <if test="map.planId !='' and map.planId != null ">
+            and A.planId like concat('%',#{map.planId},'%')
+        </if>
+
+        <if test="map.planName !='' and map.planName != null ">
+            and A.planName like concat('%',#{map.planName},'%')
+        </if>
+
+        <if test="map.url !='' and map.url != null ">
+            and A.url like concat('%',#{map.url},'%')
+        </if>
+
+        <if test="map.creator !='' and map.creator != null ">
+            and A.CREATOR like concat('%',#{map.creator},'%')
+        </if>
+
+        <if test="map.createDateS !='' and map.createDateS != null">
+            and A.CREATE_DATE > #{map.createDateS}
+        </if>
+        <if test=" map.createDateE !='' and map.createDateE != null">
+            and #{map.createDateE}  > A.CREATE_DATE
+        </if>
+        order by  A.CREATE_DATE desc
+    </select>
+
+
+    <insert id="saveLink" parameterType="com.asiainfo.biapp.pec.plan.jx.link.vo.Link">
+        INSERT INTO MCD_LINK_LIBRARY VALUES
+        (#{link.id},#{link.name},#{link.url},#{link.planId},#{link.planName},
+        #{link.status},#{link.createDate}, #{link.creator},#{link.description})
+    </insert>
+
+    <update id="updateLink" parameterType="com.asiainfo.biapp.pec.plan.jx.link.vo.Link">
+        update MCD_LINK_LIBRARY
+        set NAME = #{link.name},URL = #{link.url},planId = #{link.planId},
+        planName = #{link.planName},DESCRIPTION = #{link.description} where ID = #{link.id}
+    </update>
+
+    <select id="checkLinkIsExist" parameterType="com.asiainfo.biapp.pec.plan.jx.link.vo.Link" resultType="boolean">
+         <![CDATA[ select count(status) from MCD_LINK_LIBRARY where URL = #{link.url} and (status = '1' or status = '3') ]]>
+    </select>
+
+    <update id="updateLinkStatus" parameterType="com.asiainfo.biapp.pec.plan.jx.link.vo.Link">
+        update MCD_LINK_LIBRARY set STATUS = #{link.status} where (ID = #{link.id} or URL = #{link.url}) and STATUS != '2'
+    </update>
+
+    <select id="searchCampIdsByLinkUrl" parameterType="String" resultType="String">
+        select CAMPSEG_ID from mcd_camp_channel_ext where COLUMN_EXT1 = #{urls} OR COLUMN_EXT2 = #{urls} limit 0,10
+    </select>
+
+    <select id="queryCampIdsByLinkUrlNum" resultType="String">
+        select CAMPSEG_ID from mcd_camp_channel_ext where COLUMN_EXT1 = #{url} OR COLUMN_EXT2 = #{urls}
+    </select>
+
+    <insert id="saveBatchLink" parameterType="map">
+        INSERT INTO MCD_LINK_LIBRARY VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.id,jdbcType=VARCHAR},#{item.name,jdbcType=VARCHAR},#{item.url,jdbcType=VARCHAR},#{item.planId,jdbcType=VARCHAR},
+            #{item.planName,jdbcType=VARCHAR},#{item.status,jdbcType=CHAR},#{item.createDate},#{item.creator,jdbcType=VARCHAR},
+            #{item.description,jdbcType=VARCHAR})
+        </foreach>
+    </insert>
+
+    <select id="getToShortUrlLinkId" resultType="String">
+        select DIC_VALUE from MCD_SYS_DIC where DIC_KEY='toShortUrlLinkId'
+    </select>
+
+
+    <update id="deleteLink" parameterType="com.asiainfo.biapp.pec.plan.jx.link.vo.Link">
+        update MCD_LINK_LIBRARY set STATUS = #{link.status} where (ID = #{link.id} or URL = #{link.url}) and STATUS != '2'
+    </update>
+
+    <select id="queryCampStatusByLinkUrl" resultType="String">
+        select CAMPSEG_ID
+        from mcd_camp_def where CAMPSEG_STAT_ID  &lt; 90 and  CAMPSEG_ID in (
+        select CAMPSEG_ID from mcd_camp_channel_ext where COLUMN_EXT1 = #{url} OR COLUMN_EXT2 = #{url}
+        )
+    </select>
+
+</mapper>

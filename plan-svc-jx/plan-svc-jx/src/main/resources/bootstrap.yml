@@ -1,0 +1,26 @@
+spring:
+  application:
+    name: plan-svc
+  main:
+    allow-bean-definition-overriding: true
+  cloud:
+    nacos:
+      config:
+        namespace: mcd7-test-jx
+        server-addr: 10.19.92.24:8848
+        file-extension: yaml
+        group: mcd7-test
+        username: mcd
+        password: mcd7
+        shared-configs:
+          - data-id: common-config.yml
+            group: mcd7-test
+            refresh: true
+      discovery:
+        group: mcd7-test
+        server-addr: 10.19.92.24:8848
+        namespace: mcd7-test-jx
+        username: mcd
+        password: mcd7
+
+

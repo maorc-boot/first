@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.asiainfo.biapp.pec.plan.jx.intellpushprism.dao.IMcdPrismSceneCampDao">
+
+    <select id="queryTemplateRefCount" resultType="map">
+        select mpct.TEMPLATE_ID, mpct.TEMPLATE_NAME, count(*) refCount from
+            MCD_PRISM_CAMP_TEMPLATE mpct
+            left join MCD_PRISM_DIM_SCENE mpds
+            on mpct.TEMPLATE_ID = mpds.THEME_ID and mpct.STATUS = 1 and mpds.STATUS = 1
+            inner join MCD_PRISM_SCENE_CAMP mpsc on mpds.SCENE_ID = mpsc.SCENE_ID
+             where mpct.TEMPLATE_ID in
+            <foreach collection="themeIdList" item="themeId" open="(" close=")" separator=",">
+               #{themeId}
+            </foreach>
+            group by mpct.TEMPLATE_ID
+    </select>
+
+    <select id="queryAllCampByThemeId" resultType="map">
+        select mpsc.CAMPSEG_ROOT_ID from MCD_PRISM_CAMP_THEME mpct
+            left join MCD_PRISM_DIM_SCENE mpds
+            on mpct.THEME_ID = mpds.THEME_ID and mpct.STATUS = 1 and mpds.STATUS = 1
+            inner join MCD_PRISM_SCENE_CAMP mpsc on mpds.SCENE_ID = mpsc.SCENE_ID
+            where mpct.THEME_ID = #{themeId}
+    </select>
+
+    <select id="queryAllCampInfoByThemeId" resultType="map">
+        select mpsc.CAMPSEG_ROOT_ID, mdai.CHANNEL_NAME
+            <choose>
+                <when test="reqVO.themeId != null and reqVO.themeId != ''">
+                    ,mpds.IS_COPY from MCD_PRISM_CAMP_THEME mpct
+                </when>
+                <otherwise>
+                    from MCD_PRISM_CAMP_TEMPLATE mpct
+                </otherwise>
+            </choose>
+            left join
+            <choose>
+                <when test="reqVO.themeId != null and reqVO.themeId != ''">
+                    MCD_PRISM_DIM_SCENE mpds on mpct.THEME_ID = mpds.THEME_ID and mpct.STATUS = 1 and mpds.STATUS = 1
+                    inner join MCD_PRISM_SCENE_CAMP mpsc on mpds.SCENE_ID = mpsc.SCENE_ID
+                    left join mcd_camp_channel_list mccl on mpsc.CAMPSEG_ROOT_ID = mccl.CAMPSEG_ROOT_ID
+                    left join mcd_dim_channel mdai on mccl.CHANNEL_ID = mdai.CHANNEL_ID
+                    where mpct.THEME_ID = #{reqVO.themeId}
+                </when>
+                <otherwise>
+                    MCD_PRISM_DIM_TEMPLATE_SCENE mpds
+                    on mpct.TEMPLATE_ID = mpds.TEMPLATE_ID and mpct.STATUS = 1 and mpds.STATUS = 1
+                    inner join MCD_PRISM_TEMPLATE_SCENE_CAMP mpsc on mpds.SCENE_ID = mpsc.SCENE_ID
+                    left join mcd_prism_template_camp_channel_list mccl on mpsc.CAMPSEG_ROOT_ID = mccl.CAMPSEG_ROOT_ID
+                    left join mcd_dim_channel mdai on mccl.CHANNEL_ID = mdai.CHANNEL_ID
+                    where mpct.TEMPLATE_ID = #{reqVO.templateId}
+                </otherwise>
+            </choose>
+    </select>
+
+    <select id="queryCampInfoByThemeIdOrTemplateId" resultType="map">
+        select mpsc.CAMPSEG_ROOT_ID, mpsc.SCENE_ID, mcd.CAMPSEG_NAME from
+            <choose>
+                <when test="reqVO.themeId != null and reqVO.themeId != ''">
+                    MCD_PRISM_CAMP_THEME mpct
+                </when>
+                <otherwise>
+                    MCD_PRISM_CAMP_TEMPLATE mpct
+                </otherwise>
+            </choose>
+            left join
+            <choose>
+                <when test="reqVO.themeId != null and reqVO.themeId != ''">
+                   MCD_PRISM_DIM_SCENE mpds on mpct.THEME_ID = mpds.THEME_ID and mpct.STATUS = 1 and mpds.STATUS = 1
+                   inner join MCD_PRISM_SCENE_CAMP mpsc on mpds.SCENE_ID = mpsc.SCENE_ID
+                   left join mcd_camp_def mcd on mpsc.CAMPSEG_ROOT_ID = mcd.CAMPSEG_ROOT_ID
+                   where mpct.THEME_ID = #{reqVO.themeId}
+                </when>
+                <otherwise>
+                    MCD_PRISM_DIM_TEMPLATE_SCENE mpds
+                    on mpct.TEMPLATE_ID = mpds.TEMPLATE_ID and mpct.STATUS = 1 and mpds.STATUS = 1
+                   inner join MCD_PRISM_TEMPLATE_SCENE_CAMP mpsc on mpds.SCENE_ID = mpsc.SCENE_ID
+                   left join mcd_prism_template_camp_def mcd on mpsc.CAMPSEG_ROOT_ID = mcd.CAMPSEG_ROOT_ID
+                   where mpct.TEMPLATE_ID = #{reqVO.templateId}
+                </otherwise>
+            </choose>
+    </select>
+
+</mapper>

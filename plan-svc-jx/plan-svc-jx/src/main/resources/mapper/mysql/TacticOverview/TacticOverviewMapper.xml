@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.asiainfo.biapp.pec.plan.jx.tacticOverview.mapper.TacticOverviewMapper">
+
+    <select id="selectAllProducts"
+            resultType="com.asiainfo.biapp.pec.plan.jx.tacticOverview.service.impl.resultInfo.Product">
+        select count(0) productCount, mcpc.product_name productName
+        from mcd_camp_def mcd,
+        mcd_camp_product_classify mcpc,
+        (select distinct mccl.CAMPSEG_ROOT_ID
+        from mcd_camp_channel_list mccl,
+        mcd_camp_channel_classify_mapper mcccm
+        where mccl.CHANNEL_ID = mcccm.channel_id) tmp
+        where mcd.campseg_root_id = '0'
+        and mcd.CAMPSEG_STAT_ID = #{campsegStatId}
+        <if test="cityId != null and cityId != ''">
+            and mcd.CITY_ID = #{cityId}
+        </if>
+        and mcd.CAMPSEG_ID = tmp.CAMPSEG_ROOT_ID
+        and mcd.CAMPSEG_TYPE_ID = mcpc.classify_id
+        group by mcpc.classify_id
+    </select>
+
+    <select id="selectAllCustomerGroups"
+            resultType="com.asiainfo.biapp.pec.plan.jx.tacticOverview.service.impl.resultInfo.CustomerGroup">
+        select count(0) customerGroupCount, mccc.classify_name customerGroupName
+        from mcd_camp_def mcd,
+        mcd_custgroup_def mcg,
+        mcd_camp_cuntomer_classify mccc,
+        (select distinct mccl.CAMPSEG_ROOT_ID, mccl.CUSTGROUP_ID
+        from mcd_camp_channel_list mccl,
+        mcd_camp_channel_classify_mapper mcccm
+        where mccl.CHANNEL_ID = mcccm.channel_id) tmp
+        where mcd.campseg_root_id = '0'
+        and mcd.CAMPSEG_STAT_ID = #{campsegStatId}
+        <if test="cityId != null and cityId != ''">
+            and mcd.CITY_ID = #{cityId}
+        </if>
+        and mcd.CAMPSEG_ID = tmp.CAMPSEG_ROOT_ID
+        and tmp.CUSTGROUP_ID = mcg.CUSTOM_GROUP_ID
+        and mcg.CUSTOM_NUM between mccc.cuntomer_min and mccc.cuntomer_max
+        group by mccc.classify_id
+        order by mccc.classify_id desc
+    </select>
+
+    <select id="selectAllChannels"
+            resultType="com.asiainfo.biapp.pec.plan.jx.tacticOverview.service.impl.resultInfo.Channel">
+        select count(0) channelCount, mccc.classify_name channelName
+        from mcd_camp_def mcd,
+        mcd_camp_channel_list mccl,
+        mcd_camp_channel_classify_mapper mcccm,
+        mcd_camp_channel_classify mccc
+        where mcd.campseg_root_id = '0'
+        and mcd.CAMPSEG_STAT_ID = #{campsegStatId}
+        <if test="cityId != null and cityId != ''">
+            and mcd.CITY_ID = #{cityId}
+        </if>
+        and mcd.CAMPSEG_ID = mccl.CAMPSEG_ROOT_ID
+        and mccl.CHANNEL_ID = mcccm.channel_id
+        and mcccm.classify_id = mccc.classify_id
+        group by mccc.classify_id
+    </select>
+
+</mapper>

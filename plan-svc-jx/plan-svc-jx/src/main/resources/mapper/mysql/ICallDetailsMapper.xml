@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.asiainfo.biapp.pec.plan.jx.hmh5.dao.IMcdBasiTermMapper">
+
+    <!-- 地市下区县信息 -->
+    <select id="getDimCounty" resultType="com.asiainfo.biapp.pec.plan.jx.hmh5.vo.McdCountryVo">
+        SELECT distinct dpc.COUNTY_ID countyId,dpc.COUNTY_NAME countyName FROM DIM_PUB_COUNTY dpc
+        <where>
+            <if test="cityId != null and cityId !=''">
+                and dpc.CITY_ID = #{cityId}
+            </if>
+        </where>
+        ORDER BY dpc.COUNTY_ID
+    </select>
+
+    <!--  地市信息  -->
+    <select id="getDimcity" resultType="com.asiainfo.biapp.pec.plan.jx.hmh5.vo.McdCityVo">
+        select distinct CITY_ID cityId, CITY_NAME cityName from MCD_DIM_CITY
+    </select>
+
+    <!--  场景信息  -->
+    <select id="getScenario" resultType="com.asiainfo.biapp.pec.plan.jx.hmh5.vo.McdScenarioVo">
+        select distinct SCENARIO_ID scenarioId,SCENARIO_NAME scenarioName  from MCD_SCENARIO
+    </select>
+
+    <!--  业务场景类型查询  -->
+    <select id="queryScenarioModuleType" resultType="com.asiainfo.biapp.pec.plan.jx.hmh5.vo.McdScenarioTypeVo">
+        select MODULE_TYPE moduleType, MODULE_NAME moduleName, BUSSINESS_SCENARIO_ID businessScenarioId, BUSSINESS_SCENARIO_NAME businessScenarioName from MCD_SCENARIO_MODULE_MAPPING
+    </select>
+
+    <!--  查询客户权限（查询外呼日志的权限，不同权限查询出不同的数据）  -->
+    <select id="getReportUserPermission" resultType="com.asiainfo.biapp.pec.plan.jx.hmh5.vo.McdCallPermissConfVo">
+        select uu.USERID,
+               uu.CITYID,
+               dc.CITY_NAME,
+               uu.COUNTY,
+               county.COUNTY_NAME,
+               uu.GRID_ID,
+               grid.GRID_NAME,
+               rep.PERMISSION
+        from user_user uu
+                 left join MCD_DIM_CITY dc on uu.CITYID = dc.CITY_ID
+                 left join DIM_PUB_COUNTY county on county.COUNTY_ID = uu.COUNTY
+                 left join DIM_PUB_GRID grid on grid.GRID_ID = uu.GRID_ID
+                 left join REPORT_EXPORT_PERMISSION_CONFIG rep on uu.USERID = rep.USER_ID
+        <where>
+            <if test="userId != null and userId !=''">
+                and uu.USERID = #{userId}
+            </if>
+        </where>
+    </select>
+
+    <!-- 查询报表客户权限（查询预警的权限，不同权限查询出不同的数据）   -->
+    <select id="getCallLogPermissionConf" resultType="com.asiainfo.biapp.pec.plan.jx.hmh5.vo.McdCallPermissConfVo">
+        select uu.USERID,
+               uu.CITYID,
+               dc.CITY_NAME,
+               uu.COUNTY,
+               county.COUNTY_NAME,
+               uu.GRID_ID,
+               grid.GRID_NAME,
+               cc.PERMISSION
+        from user_user uu
+                 left join MCD_DIM_CITY dc on uu.CITYID = dc.CITY_ID
+                 left join DIM_PUB_COUNTY county on county.COUNTY_ID = uu.COUNTY
+                 left join DIM_PUB_GRID grid on grid.GRID_ID = uu.GRID_ID
+                 left join CALLOUT_LOG_PERMISSION_CONFIG cc on uu.USERID = cc.USER_ID
+        <where>
+            <if test="userId != null and userId !=''">
+                and uu.USERID = #{userId}
+            </if>
+        </where>
+    </select>
+
+    <!--  区县下网格信息  -->
+    <select id="getDimGrid" resultType="com.asiainfo.biapp.pec.plan.jx.hmh5.vo.McdGridVo">
+        select GRID_ID,GRID_NAME from dim_pub_grid
+        <where>
+            <if test="query.cityId != null and query.cityId !=''">
+                and CITY_ID = #{query.cityId}
+            </if>
+
+            <if test="query.countryId != null and query.countryId !='' and query.countryId != '9999'">
+                and COUNTY_ID = #{query.countryId}
+            </if>
+        </where>
+    </select>
+
+    <!--  轨迹预警数据信息 -->
+    <select id="getReportEnergyAlarm" resultType="com.asiainfo.biapp.pec.plan.jx.hmh5.vo.McdAlarmVo">
+        select distinct mai.ALARM_ID,mai.ALARM_NAME from MCD_APP_ALARM_INFO mai
+    </select>
+
+    <!-- 轨迹预警数据信息 -->
+    <select id="getReportTraceAlarm" resultType="com.asiainfo.biapp.pec.plan.jx.hmh5.vo.McdAlarmVo">
+        select distinct mai.ALARM_ID,mai.ALARM_NAME from MCD_APP_ALARM_INFO mai
+    </select>
+
+</mapper>

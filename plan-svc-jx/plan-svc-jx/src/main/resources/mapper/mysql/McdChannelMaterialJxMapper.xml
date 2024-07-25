@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.asiainfo.biapp.pec.plan.jx.camp.dao.IChannelMaterialQueryDao">
+
+
+  <!-- 转至沟通人查询映射结果 -->
+  <resultMap id="communicationResultMap" type="com.asiainfo.biapp.pec.plan.jx.camp.vo.McdCommunicationUsers">
+    <id column="USER_ID" property="userId" />
+    <result column="USER_NAME" property="userName" />
+    <result column="CITY_ID" property="cityId" />
+    <result column="CITY_NAME" property="cityName" />
+    <result column="DEPARTMENT_ID" property="departmentId" />
+    <result column="TITLE" property="departmentName" />
+    <result column="MOBILE_PHONE" property="mobilePhone" />
+
+  </resultMap>
+
+  <select id="queryCommunicationUsers" resultMap="communicationResultMap">
+
+    SELECT mu.USER_ID,mu.USER_NAME,mu.CITY_ID,mu.DEPARTMENT_ID,mu.MOBILE_PHONE,mc.CITY_NAME,md.TITLE
+    FROM mcd_sys_user mu
+    LEFT JOIN mcd_sys_city mc ON mc.CITY_ID = mu.CITY_ID
+    LEFT JOIN mcd_sys_department md ON md.DEPT_ID = mu.DEPARTMENT_ID
+
+    <if test="param.keyWords != null and param.keyWords != ''">
+      where  mu.USER_ID like concat('%',#{param.keyWords},'%') or mu.USER_NAME like concat('%',#{param.keyWords},'%')
+    </if>
+
+
+  </select>
+
+  <select id="queryMaterialRelChannelList" resultType="com.asiainfo.biapp.pec.plan.jx.camp.model.ChannelMaterialModel">
+    select mcce.COLUMN_EXT2 materialId, mcce.COLUMN_EXT3 materialName, mccl.STATUS materialStatus from mcd_camp_channel_list mccl left join mcd_camp_channel_ext mcce
+    on mccl.CAMPSEG_ID = mcce.CAMPSEG_ID
+    where mccl.CHANNEL_ID = #{channelId}
+    and mccl.STATUS not in (20, 32)
+  </select>
+
+  <select id="chkHasCampUsedMaterial" resultType="map">
+    select count(1) as count, mccl.CAMPSEG_ID campsegId, mcce.COLUMN_EXT2 materialId, mccl.STATUS status from mcd_camp_channel_list mccl
+    left join mcd_camp_channel_ext mcce
+    on mccl.CAMPSEG_ID = mcce.CAMPSEG_ID
+    where mccl.CHANNEL_ID = 968
+    and mccl.STATUS not in (20, 32)
+    and mcce.COLUMN_EXT2 = #{materialId}
+  </select>
+
+  <select id="chkMaterialFallbackStat" resultType="map">
+    select count(1) as count, MAIN_AUDIT_STATUS status from MATERIAL_AUDIT_FALLBACK
+    where MATERIAL_ID = #{materialId}
+  </select>
+
+</mapper>

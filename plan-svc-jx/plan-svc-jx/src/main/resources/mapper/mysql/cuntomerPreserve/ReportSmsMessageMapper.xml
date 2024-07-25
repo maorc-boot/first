@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.asiainfo.biapp.pec.plan.jx.hmh5.transplant.cuntomerPreserve.mapper.ReportSmsMessageMapper">
+    <select id="selectCustomerPreserveDetail"
+            resultType="com.asiainfo.biapp.pec.plan.jx.hmh5.transplant.cuntomerPreserve.service.impl.resultInfo.CustomerPreserveDetailResultInfo">
+        select rsm.CITY_NAME,rsm.COUNTY_NAME,rsm.CHANNEL_ID,rsm.CHANNEL_NAME,rsm.GRID_NAME,rsm.KH_USER_NUM,rsm.DX_NUM_D
+        from mcd_report.report_sms_message rsm
+        <where>
+            <if test="param.cityId != null and param.cityId != ''">
+                AND rsm.CITY_ID = #{param.cityId}
+            </if>
+            <if test="param.countyId != null and param.countyId != ''">
+                AND rsm.COUNTY_ID = #{param.countyId}
+            </if>
+            <if test="param.gridId != null and param.gridId != ''">
+                AND rsm.GRID_ID = #{param.gridId}
+            </if>
+            <if test="param.opDate != null">
+                AND rsm.OP_TIME = to_char(#{param.opDate}, 'yyyyMMdd')
+            </if>
+        </where>
+        order by rsm.OP_TIME desc
+    </select>
+
+    <select id="exportCustomerPreserveDetail"
+            resultType="java.util.LinkedHashMap">
+        select sms_id 维系ID, OP_TIME 维系日期, city_id 地市编号, city_name 地市名称, county_id 区县编号, county_name 区县名称,
+        channel_id 渠道ID, channel_name 渠道名称, grid_id 网格ID, grid_name 网格名称, staff_id 员工ID,
+        staff_name 员工姓名, kh_user_num 看护客户数, dx_num_d 当日短信发送量, wh_num_d 当日外呼量, dr_fw_d 当日服务客户,
+        dx_fs_m 当月短信发送量, wh_num_m 当月外呼量, dy_fw_m 当月服务客户, fg_rate 客户覆盖率, myd_rate 客户满意度
+        from mcd_report.report_sms_message rsm
+        <where>
+            <if test="param.cityId != null and param.cityId != ''">
+                AND rsm.CITY_ID = #{param.cityId}
+            </if>
+            <if test="param.countyId != null and param.countyId != ''">
+                AND rsm.COUNTY_ID = #{param.countyId}
+            </if>
+            <if test="param.gridId != null and param.gridId != ''">
+                AND rsm.GRID_ID = #{param.gridId}
+            </if>
+            <if test="param.opDate != null">
+                AND rsm.OP_TIME = to_char(#{param.opDate}, 'yyyyMMdd')
+            </if>
+        </where>
+        order by rsm.OP_TIME desc
+    </select>
+
+</mapper>

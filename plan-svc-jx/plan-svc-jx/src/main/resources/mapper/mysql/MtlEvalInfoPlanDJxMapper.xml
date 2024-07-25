@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.asiainfo.biapp.pec.plan.jx.camp.dao.MtlEvalInfoPlanDJxDao">
+
+
+    <select id="querySaleNumMonAndSaleSuccessNumMon" resultType="java.util.Map">
+        select ifnull(sum(ifnull(mecd.CAMP_USER_NUM, 0)), 0) as saleNumMon,
+        ifnull(sum(ifnull(mecd.CAMP_SUCC_NUM, 0)), 0) as saleSuccessNumMon
+        from mtl_eval_info_plan_d mecd
+        where DATE_FORMAT(mecd.STAT_DATE, '%Y%m') = DATE_FORMAT(CURDATE(), '%Y%m')
+        <if test="userCity != null and userCity!= ''">
+            and mecd.CITY_ID =#{userCity}
+        </if>
+
+
+    </select>
+
+    <select id="querySaleNumAndSaleSuccessNumPast" resultType="java.util.Map">
+        select ifnull(sum(ifnull(mecm.CAMP_USER_NUM, 0)), 0) as saleNumPast,
+               ifnull(sum(ifnull(mecm.CAMP_SUCC_NUM, 0)), 0) as saleSuccessNumPast
+        from  mtl_eval_info_plan_m mecm
+        <if test="userCity != null and userCity!= ''">
+            where mecm.CITY_ID =#{userCity}
+        </if>
+
+
+
+    </select>
+
+
+    <select id="querySaleNumDayAndSaleSuccessNumDay" resultType="java.util.Map">
+        select ifnull(sum(ifnull(mecd.CAMP_USER_NUM, 0)), 0) as saleNumDay,
+               ifnull(sum(ifnull(mecd.CAMP_SUCC_NUM, 0)), 0) as saleSuccessNumDay
+        from mtl_eval_info_plan_d mecd
+        where  to_days(mecd.STAT_DATE) = to_days(DATE_ADD(sysdate(), interval -1 day ))
+        <if test="userCity != null and userCity!= ''">
+            and mecd.CITY_ID =#{userCity}
+        </if>
+
+
+    </select>
+
+
+</mapper>

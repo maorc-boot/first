@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.asiainfo.biapp.pec.plan.jx.smstemplates.dao.ISmsContentEditDao">
+
+
+
+    <select id="getSmsContentEditList" resultType="com.asiainfo.biapp.pec.plan.jx.smstemplates.model.McdSmsContentEditInfo">
+
+        select *
+        from mcd_market_terms_template
+        where type = 0
+        and CHANNEL_ID = '910'
+
+        <if test="param.keyWords != null and param.keyWords != ''">
+            and (ID like concat('%', #{param.keyWords}, '%') or CONTENT like concat('%', #{param.keyWords}, '%'))
+        </if>
+
+
+
+    </select>
+
+
+    <select id="getSmsContentTemplateList" resultType="com.asiainfo.biapp.pec.plan.jx.smstemplates.model.McdSmsContentEditInfo">
+
+        select *
+        from mcd_market_terms_template
+        where type = 0
+
+        <if test="param.channelId != null and param.channelId != ''">
+            and CHANNEL_ID = #{param.channelId}
+        </if>
+
+        <if test="param.planId != null and param.planId != ''">
+            and PLAN_ID = #{param.planId}
+        </if>
+
+    </select>
+
+</mapper>

@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.asiainfo.biapp.pec.plan.jx.camp.dao.McdCampListDao">
+
+    <!--原符号 < <= > >= & ' "
+    替换符号 &lt; &lt;= &gt; &gt;= &amp; &apos; &quot;
+    例如：sql如下：
+    create_date_time &gt;= #{startTime} and create_date_time &lt;= #{endTime}-->
+
+    <select id="syncReadyCampList" resultType="com.asiainfo.biapp.pec.common.jx.model.CampsegSyncInfo">
+        SELECT MCT.TASK_ID                  taskId,
+               MCCL.CUSTGROUP_SOURCE        custgroupSource,
+               MCCL.CAMPSEG_ID              campsegId,
+               MCCL.CAMPSEG_PID             campsegPid,
+               MCCL.CAMPSEG_ROOT_ID         campsegRootId,
+               MCD.CAMPSEG_NAME             campsegName,
+               MCD.START_DATE               startDate,
+               MCD.END_DATE                 endDate,
+               MCD.CITY_ID                  cityId,
+               MCCL.CHANNEL_ID              channelId,
+               MCCL.CHANNEL_ADIV_ID         channelAdivId,
+               MCCL.EXEC_CONTENT            execContent,
+               MCCL.PLAN_ID                 planId,
+               MPD.PLAN_NAME                planName,
+               MPD.PLAN_TYPE                planType,
+               MPD.PLAN_SRV_TYPE            planSrvType,
+               MPD.PLAN_DESC                planDesc,
+               MCCL.CUSTGROUP_ID            customGroupId,
+               MCD.MARKETING_TYPE           marketingType,
+               MCCL.SMS_CONTENT             smsContent,
+               MCCL.HANDLE_URL              handleUrl,
+               MCCL.MATERIAL_DISPLAY_URL    materialDisplayUrl,
+               MCCL.MATERIAL_CLICK_URL      materialClickUrl,
+               MCCL.IS_CHANNEL_PREDILECTION isChannelPredilection,
+               MCCL.IF_HAVE_VAR             ifHaveVar,
+               MCT.CYCLE_TYPE               cycleType,
+               MCD.ACTIVITY_TYPE            activityType,
+               MCD.CAMPSEG_TYPE_ID          campsegTypeId,
+               MCD.PREVIEW_CAMP             previewCamp,
+               MCCL.CAMP_CLASS              campClass,
+               MPD.PARENT_ID                parentId,
+               MPD.PLAN_DESC                planDesc,
+               MPD.PLAN_COMMENT             planComment,
+               MPD.PLAN_START_DATE          planStartDate,
+               MPD.PLAN_END_DATE            planEndDate,
+               MPEJ.PLAN_BUSI_TYPE_CODE     planBusiTypeCode,
+               MPD.STATUS                   status,
+               MCD.CREATE_USER_ID           createUserId,
+               MCD.CREATE_TIME              createDate,
+               IFNULL(MCCL.PRIORITY_ORDER,0)          priorityOrder,
+               MCCL.CUSTGROUP_ID            custgroupId,
+               MCCE.COLUMN_EXT1             ext1,
+               MCCE.COLUMN_EXT2             ext2,
+               MCCE.COLUMN_EXT3             ext3,
+               MCCE.COLUMN_EXT4             ext4,
+               MCCE.COLUMN_EXT5             ext5,
+               MCCE.COLUMN_EXT6             ext6,
+               MCCE.COLUMN_EXT7             ext7,
+               MCCE.COLUMN_EXT8             ext8,
+               MCCE.COLUMN_EXT9             ext9,
+               MCCE.COLUMN_EXT10            ext10,
+               MCCE.COLUMN_EXT11            ext11,
+               MCCE.COLUMN_EXT12            ext12,
+               MCCE.COLUMN_EXT13            ext13,
+               MCCE.COLUMN_EXT14            ext14,
+               MCCE.COLUMN_EXT15            ext15,
+               MCCE.COLUMN_EXT16            ext16,
+               MCCE.COLUMN_EXT17            ext17,
+               MCCE.COLUMN_EXT18            ext18,
+               MCCE.COLUMN_EXT19            ext19,
+               MCCE.COLUMN_EXT20            ext20,
+               MCFP.FUSION_PLAN_IDS         fusionPlanIds,
+               MCFP.FUSION_PLAN_NAMES       fusionPlanNames,
+               MCCL.WAVES_NO  waveNo,
+               ifnull(MCCL.WAVES_NO, 1)  waveNum
+        FROM MCD_CAMP_TASK MCT
+                 JOIN MCD_CAMP_CHANNEL_LIST MCCL ON MCCL.CAMPSEG_ID = MCT.CAMPSEG_ID
+                 JOIN MCD_CAMP_DEF MCD ON MCD.CAMPSEG_ID = MCCL.CAMPSEG_PID
+                 LEFT JOIN MCD_CAMP_CHANNEL_EXT MCCE ON MCCE.CAMPSEG_ID = MCCL.CAMPSEG_ID
+                 LEFT JOIN MCD_PLAN_DEF MPD ON MPD.PLAN_ID = MCCL.PLAN_ID
+                 LEFT JOIN MCD_PLAN_EXT_JX MPEJ on MCCL.PLAN_ID = MPEJ.PLAN_ID
+                 LEFT JOIN MCD_DIM_ADIV_INFO MDAI ON MDAI.ADIV_ID = MCCL.CHANNEL_ADIV_ID
+                left join
+                   (select t.CAMPSEG_ID CAMPSEG_ROOT_ID,
+                           t.PLAN_ID,
+                           group_concat(t.FUSION_PLAN_ID separator '|')   FUSION_PLAN_IDS,
+                           group_concat(t.FUSION_PLAN_NAME separator '|') FUSION_PLAN_NAMES
+                    from mcd_camp_fusion_plan t
+                    group by t.CAMPSEG_ID, t.PLAN_ID ) MCFP ON MCCL.CAMPSEG_ROOT_ID = MCFP.CAMPSEG_ROOT_ID AND  MCCL.PLAN_ID = MCFP.PLAN_ID
+        WHERE MCCL.STATUS = 54
+          AND MCT.EXEC_STATUS IN (50, 51)
+          AND MDAI.EXEC_TYPE IN (1001, 1002, 2000)
+        ORDER BY MCCL.PRIORITY_ORDER desc
+    </select>
+
+    <select id="selectCampInfoById" resultType="com.asiainfo.biapp.pec.common.jx.model.CampsegSyncInfo">
+        SELECT MCCL.CAMPSEG_ID              campsegId,
+               MCCL.CAMPSEG_PID             campsegPid,
+               MCD.CAMPSEG_NAME             campsegName,
+               MCD.START_DATE               startDate,
+               MCD.END_DATE                 endDate,
+               MCD.CITY_ID                  cityId,
+               MCCL.CHANNEL_ID              channelId,
+               MCCL.CHANNEL_ADIV_ID         channelAdivId,
+               MCCL.EXEC_CONTENT            execContent,
+               MCCL.PLAN_ID                 planId,
+               MCCL.CUSTGROUP_ID            customGroupId,
+               MCD.MARKETING_TYPE           marketingType,
+               MCCL.SMS_CONTENT             smsContent,
+               MCCL.HANDLE_URL              handleUrl,
+               MCCL.MATERIAL_DISPLAY_URL    materialDisplayUrl,
+               MCCL.MATERIAL_CLICK_URL      materialClickUrl,
+               MCCL.IS_CHANNEL_PREDILECTION isChannelPredilection,
+               MCCL.IF_HAVE_VAR             ifHaveVar,
+               MCD.ACTIVITY_TYPE            activityType,
+               MCD.CAMPSEG_TYPE_ID          campsegTypeId,
+               MCCL.CAMP_CLASS              campClass,
+               MCCL.CUSTGROUP_ID            custgroupId,
+               MCCE.COLUMN_EXT1             ext1,
+               MCCE.COLUMN_EXT2             ext2,
+               MCCE.COLUMN_EXT3             ext3,
+               MCCE.COLUMN_EXT4             ext4,
+               MCCE.COLUMN_EXT5             ext5,
+               MCCE.COLUMN_EXT6             ext6,
+               MCCE.COLUMN_EXT7             ext7,
+               MCCE.COLUMN_EXT8             ext8,
+               MCCE.COLUMN_EXT9             ext9,
+               MCCE.COLUMN_EXT10            ext10,
+               MCCE.COLUMN_EXT11            ext11,
+               MCCE.COLUMN_EXT12            ext12,
+               MCCE.COLUMN_EXT13            ext13,
+               MCCE.COLUMN_EXT14            ext14,
+               MCCE.COLUMN_EXT15            ext15,
+               MCCE.COLUMN_EXT16            ext16,
+               MCCE.COLUMN_EXT17            ext17,
+               MCCE.COLUMN_EXT18            ext18,
+               MCCE.COLUMN_EXT19            ext19,
+               MCCE.COLUMN_EXT20            ext20
+        FROM  MCD_CAMP_CHANNEL_LIST MCCL
+                 LEFT JOIN MCD_CAMP_DEF MCD ON MCD.CAMPSEG_ID = MCCL.CAMPSEG_PID
+                 LEFT JOIN MCD_CAMP_CHANNEL_EXT MCCE ON MCCE.CAMPSEG_ID = MCCL.CAMPSEG_ID
+        WHERE MCCL.CAMPSEG_ID = #{campId};
+
+    </select>
+    <select id="selectChannelTaskTypeDetail"
+            resultType="com.asiainfo.biapp.pec.plan.jx.camp.vo.TaskTypeDetail">
+        select typename as typeName,
+               typeorder as typeOrder,
+               typecode as typeCode,
+               pcode as pcode,
+               isinuse as isInuse,
+               uncontact as uncontact,
+               hascontact as hasContact,
+               all_all as allAll
+        from MCD_FRONT_LINE_DIC
+        where PCODE = #{pcode}
+        order by TYPEORDER asc
+    </select>
+    <select id="selectNoCustCamp" resultType="java.util.Map">
+        select CEP_EVENT_ID as STREAM_EVENT_ID,group_concat(CAMPSEG_ID) CAMPSEG_ID
+        from mcd_camp_channel_list mccl
+        where  mccl.CEP_EVENT_ID is not null
+          and  mccl.CUSTGROUP_ID = 'JX0000000001'
+          and mccl.STATUS = 54
+        group by CEP_EVENT_ID order by CEP_EVENT_ID;
+    </select>
+</mapper>

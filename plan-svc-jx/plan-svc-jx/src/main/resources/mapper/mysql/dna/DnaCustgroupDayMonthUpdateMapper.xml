@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.asiainfo.biapp.pec.plan.jx.dna.dao.IDnaCustgroupDayMonthUpdateDao">
+
+    <select id="queryNeedUpdateCustgroup" resultType="com.asiainfo.biapp.pec.plan.jx.dna.vo.DnaCustgroupUpdateVo">
+        select
+            mccl.CAMPSEG_ID, mccl.UPDATE_CYCLE, mcd.CUSTOM_GROUP_ID, mcd.CUSTOM_GROUP_NAME, mcd.CUSTOM_GROUP_DESC, mcd.CUSTOM_NUM,
+            mcd.ACTUAL_CUSTOM_NUM, mcd.CUSTOM_STATUS_ID, mcd.CUSTOM_SOURCE_ID, mcd.CREATE_USER_ID, mcd.PUSH_TARGET_USER, mcd.CREATE_TIME,
+            mcd.EFFECTIVE_TIME, mcd.FAIL_TIME, mcd.LIST_TABLE_NAME, mcd.DATA_DATE, mcd.RULE_DESC, mcd.SYNC_TIMES,
+            mcd.IS_PUSH_OTHER, mcd.FILE_NAME, mcd.CUST_TYPE, mcd.UPDATE_STATUS
+            from mcd_camp_channel_list mccl
+            left join mcd_custgroup_def mcd on mccl.P_CUSTGROUP_ID = mcd.CUSTOM_GROUP_ID
+            where mccl.STATUS in (54, 59)
+            and mccl.CUSTGROUP_SOURCE = 1
+            and mcd.CUSTOM_SOURCE_ID = '2'
+            and mccl.UPDATE_CYCLE in (2, 3)
+            <if test="custGroupId != null and custGroupId != ''">
+                and mcd.CUSTOM_GROUP_ID = #{custGroupId}
+            </if>
+
+<!--        select mccl.CAMPSEG_ID, mcd.*-->
+<!--                from mcd_camp_channel_list mccl-->
+<!--                left join mcd_custgroup_def mcd on mccl.P_CUSTGROUP_ID = mcd.CUSTOM_GROUP_ID-->
+<!--                where mccl.STATUS in (54, 59)-->
+<!--                and mccl.CUSTGROUP_SOURCE = 1-->
+<!--                and mcd.CUSTOM_SOURCE_ID = '2'-->
+<!--                <choose>-->
+<!--                    <when test="type != null and type != '' and type == 'day'">-->
+<!--                        and mcd.DATA_DATE = date_format(now(), '%Y%m%d')-->
+<!--                        and mccl.UPDATE_CYCLE = 3-->
+<!--                    </when>-->
+<!--                    <otherwise>-->
+<!--                        and mcd.DATA_DATE = date_format(now(), '%Y%m')-->
+<!--                        and mccl.UPDATE_CYCLE = 2-->
+<!--                    </otherwise>-->
+<!--                </choose>-->
+    </select>
+
+</mapper>

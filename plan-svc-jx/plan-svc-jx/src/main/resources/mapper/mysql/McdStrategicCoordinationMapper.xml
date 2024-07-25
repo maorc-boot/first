@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.asiainfo.biapp.pec.plan.jx.coordination.dao.McdStrategicCoordinationDao">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.asiainfo.biapp.pec.plan.jx.coordination.vo.StrategicCoordinationBaseInfo">
+
+        <result column="CAMPSEG_ID" property="campsegId"/>
+        <result column="CAMPSEG_PID" property="campsegPId"/>
+        <result column="CAMPSEG_ROOT_ID" property="campsegRootId"/>
+        <result column="CAMPSEG_NAME" property="campsegName"/>
+        <result column="execPeriod" property="execPeriod"/>
+        <result column="CREATE_USER_ID" property="createUserId"/>
+        <result column="USER_NAME" property="createUserName"/>
+        <result column="PLAN_ID" property="planId"/>
+        <result column="PLAN_NAME" property="planName"/>
+        <result column="CUSTOM_NUM" property="customNum"/>
+        <result column="UPDATE_CYCLE" property="updateCycle"/>
+        <result column="updateCycleName" property="updateCycleName"/>
+        <result column="FILE_NAME" property="fileName"/>
+        <result column="CUSTOM_GROUP_ID" property="customGroupId"/>
+        <result column="CHANNEL_ID" property="channelId"/>
+        <result column="CHANNEL_ADIV_ID" property="adivId"/>
+        <result column="PUSH_TYPE" property="pushType"/>
+        <result column="PREVIEW_CAMP" property="previewCamp"/>
+    </resultMap>
+
+    <!-- 江西策略池分页查询 -->
+    <select id="queryStrategicCoordinationBaseInfos" resultMap="BaseResultMap">
+        select A.CAMPSEG_ID,mcd.CAMPSEG_ID CAMPSEG_PID,mcd.CAMPSEG_ROOT_ID,mcd.CAMPSEG_NAME,A.CHANNEL_ID,A.CHANNEL_ADIV_ID,
+        concat(date_format(mcd.START_DATE,'%Y-%m-%d'),'~',date_format(mcd.END_DATE,'%Y-%m-%d')) execPeriod,
+        mcd.CREATE_USER_ID,D.USER_NAME, B.PLAN_ID,B.PLAN_NAME,C.CUSTOM_NUM,C.UPDATE_CYCLE,C.CUSTOM_GROUP_ID,C.FILE_NAME,
+        mcd.PREVIEW_CAMP,E.COLUMN_EXT1 PUSH_TYPE ,
+        case C.UPDATE_CYCLE when 3 then '周期性' when 2 then '周期性' else '一次性' end updateCycleName
+        from mcd_camp_def mcd
+        left join mcd_camp_channel_list A on A.CAMPSEG_PID =  mcd.CAMPSEG_ID
+        join mcd_plan_def B on B.PLAN_ID = A.PLAN_ID
+        left join mcd_custgroup_def C on C.CUSTOM_GROUP_ID = A.CUSTGROUP_ID
+        left join mcd_sys_user D on D.USER_ID = mcd.CREATE_USER_ID
+        left join mcd_camp_channel_ext E on E.CAMPSEG_ID = A.CAMPSEG_ID
+        where mcd.CAMPSEG_TYPE_ID =1 and mcd.CAMPSEG_STAT_ID = 54
+        and A.PLAN_ID not in (select * from mcd_virtual_plan)
+
+        <if test="req.updateCycle != null and req.updateCycle !='' and req.updateCycle == '1'.toString()">
+            and C.UPDATE_CYCLE = 1
+        </if>
+
+        <if test="req.updateCycle != null and req.updateCycle !='' and req.updateCycle != '1'.toString()">
+            and C.UPDATE_CYCLE in (2,3)
+        </if>
+
+        <if test="req.channelId != null and req.channelId !=''">
+            and A.CHANNEL_ID = #{req.channelId}
+        </if>
+
+        <if test="req.createUserName != null and req.createUserName !=''">
+            and (mcd.CREATE_USER_ID like concat('%',#{req.createUserName},'%')
+            or D.USER_NAME  like concat('%',#{req.createUserName},'%'))
+        </if>
+
+        <if test="req.campsegIdOrName != null and req.campsegIdOrName !=''">
+            and (mcd.CAMPSEG_NAME like concat('%',#{req.campsegIdOrName},'%')
+            or mcd.CAMPSEG_ID like concat('%',#{req.campsegIdOrName},'%'))
+        </if>
+
+        <if test="req.startDate != null and req.startDate !=''">
+            and  date_format( mcd.START_DATE,'%Y-%m-%d') >=  #{req.startDate}
+        </if>
+
+
+        <if test="req.endDate != null and req.endDate !=''">
+            and    date_format( mcd.END_DATE,'%Y-%m-%d') = #{req.endDate}
+        </if>
+
+
+        order by mcd.CREATE_TIME desc
+
+    </select>
+
+    <select id="selectAllStrategicCoordinationList" resultMap="BaseResultMap">
+        select A.CAMPSEG_ID,mcd.CAMPSEG_ID CAMPSEG_PID,mcd.CAMPSEG_ROOT_ID,mcd.CAMPSEG_NAME,A.CHANNEL_ID,A.CHANNEL_ADIV_ID,
+        concat(date_format(mcd.START_DATE,'%Y-%m-%d'),'~',date_format(mcd.END_DATE,'%Y-%m-%d')) execPeriod,
+        mcd.CREATE_USER_ID,D.USER_NAME, B.PLAN_ID,B.PLAN_NAME,C.CUSTOM_NUM,C.UPDATE_CYCLE,C.CUSTOM_GROUP_ID,C.FILE_NAME,
+        mcd.PREVIEW_CAMP,E.COLUMN_EXT1 PUSH_TYPE ,
+        case C.UPDATE_CYCLE when 3 then '周期性' when 2 then '周期性' else '一次性' end updateCycleName
+        from mcd_camp_def mcd
+        left join mcd_camp_channel_list A on A.CAMPSEG_PID =  mcd.CAMPSEG_ID
+        join mcd_plan_type_priority  B on B.PLAN_ID = A.PLAN_ID
+        left join mcd_custgroup_def C on C.CUSTOM_GROUP_ID = A.CUSTGROUP_ID
+        left join mcd_sys_user D on D.USER_ID = mcd.CREATE_USER_ID
+        left join mcd_camp_channel_ext E on E.CAMPSEG_ID = A.CAMPSEG_ID
+        where mcd.CAMPSEG_TYPE_ID =1 and mcd.CAMPSEG_STAT_ID = 54
+        and A.PLAN_ID not in (select * from mcd_virtual_plan)
+
+        <if test="req.updateCycle != null and req.updateCycle !='' and req.updateCycle == '1'.toString()">
+            and C.UPDATE_CYCLE = 1
+        </if>
+
+        <if test="req.updateCycle != null and req.updateCycle !='' and req.updateCycle != '1'.toString()">
+            and C.UPDATE_CYCLE in (2,3)
+        </if>
+
+        <if test="req.channelId != null and req.channelId !=''">
+            and A.CHANNEL_ID = #{req.channelId}
+        </if>
+
+        <if test="req.createUserName != null and req.createUserName !=''">
+            and (mcd.CREATE_USER_ID like concat('%',#{req.createUserName},'%')
+            or D.USER_NAME  like concat('%',#{req.createUserName},'%'))
+        </if>
+
+        <if test="req.campsegIdOrName != null and req.campsegIdOrName !=''">
+            and (mcd.CAMPSEG_NAME like concat('%',#{req.campsegIdOrName},'%')
+            or mcd.CAMPSEG_ID like concat('%',#{req.campsegIdOrName},'%'))
+        </if>
+
+        <if test="req.startDate != null and req.startDate !=''">
+            and  date_format( mcd.START_DATE,'%Y-%m-%d') >=  #{req.startDate}
+        </if>
+
+
+        <if test="req.endDate != null and req.endDate !=''">
+            and    date_format( mcd.END_DATE,'%Y-%m-%d') = #{req.endDate}
+        </if>
+
+
+    </select>
+
+
+
+    <select id="qryApprTaskRecord" resultType="com.asiainfo.biapp.pec.plan.jx.coordination.response.ApprTaskRecord">
+        select mdm.TASK_ID,
+        mdm.TASK_NAME,
+        mdm.CREATE_USER_ID,
+        mdm.CREATE_USER_NAME,
+        mdm.CREATE_TIME ,
+        mdm.EXEC_STATUS,
+        mdm.PLAN_TOTAL_NUM,
+        mdm.CUSTOM_TOTAL_NUM
+        from mcd_camp_coordinate_task mdm
+        where 1=1
+        and mdm.TASK_PID = 0
+        <if test="taskIds.size()>0">
+            and  mdm.TASK_ID in
+            <foreach collection="taskIds" item="taskIds" open="(" close=")" separator=",">
+                #{taskIds,jdbcType=VARCHAR}
+            </foreach>
+        </if>
+
+        <if test="req.taskIdOrName != null and req.taskIdOrName != ''">
+
+            and ( mdm.TASK_NAME like concat('%',#{req.taskIdOrName},'%') or mdm.TASK_ID like concat('%',#{req.taskIdOrName},'%'))
+        </if>
+
+        <if test="req.createUserIdOrName != null and req.createUserIdOrName != ''">
+
+            and ( mdm.CREATE_USER_ID like concat('%',#{req.createUserIdOrName},'%') or  mdm.CREATE_USER_NAME like concat('%',#{req.createUserIdOrName},'%'))
+        </if>
+
+        order by mdm.CREATE_TIME DESC
+    </select>
+
+    <select id="approveChildTaskRecord" resultType="com.asiainfo.biapp.pec.plan.jx.coordination.response.ApprTaskRecord">
+       select mdm.TASK_ID,
+        mdm.TASK_PID,
+        mdm.TASK_NAME,
+        mdm.CREATE_USER_ID,
+        mdm.CREATE_USER_NAME,
+        mdm.CREATE_TIME ,
+        mdm.EXEC_STATUS,
+        mdm.PLAN_TOTAL_NUM,
+        mdm.CUSTOM_TOTAL_NUM,
+        mdm.PUSH_FILE_NAME,
+        mdm.EXPORT_FILE_NAME,
+        mct.tag_id,
+        mct.tag_name,
+        mct.order_by,
+        mcct.cust_type_name
+        from mcd_camp_coordinate_task mdm
+        left join mcd_coordinate_tag mct
+        on mdm.TOP_TAG_ID = mct.tag_id
+        inner join mcd_coordinate_cust_type mcct
+        on mct.cust_type_id = mcct.cust_type_id
+        where 1=1
+        <if test="taskIds.size() > 0">
+            and mdm.TASK_PID in
+            <foreach collection="taskIds" index="index" item="taskId" open="(" separator="," close=")">
+                #{taskId}
+            </foreach>
+        </if>
+        <if test="qryApproved == true">
+            and mdm.EXEC_STATUS = #{status}
+        </if>
+        order by mct.order_by asc
+    </select>
+
+</mapper>

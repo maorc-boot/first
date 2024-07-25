@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.asiainfo.biapp.pec.plan.jx.enterprise.mapper.McdMtlGuardNewMapper">
+    <select id="queryEnumByTypeAndParentId" resultType="com.asiainfo.biapp.pec.plan.jx.enterprise.enums.McdSysEnum">
+        select ID          as enumId,
+               LEVEL_TYPE  as enumType,
+               LEVEL_KEY   as enumKey,
+               LEVEL_VALUE as enumValue,
+               LEVEL_ORDER as enumOrder,
+               PARENT_ID   as parentId
+        from MCD_10088_PROJECT_LEVEL
+        where LEVEL_TYPE=#{enumType} and PARENT_ID =#{parentId}
+    </select>
+
+    <!--<select id="queryTaskIdBySubTaskId" resultType="java.lang.String">
+        select  mse.ENUM_KEY
+        from MCD_TASKTYPE_PROJECTLEVEL3_MAPPING mtp
+        left join MCD_SYS_ENUM mse on mtp.TASK_ID = mse.ENUM_ID
+        where mse.ENUM_TYPE = 'iop_taskType_id'
+        and PROJECT_LEVEL3_ID = #{subTaskTypeId}
+    </select>-->
+    <select id="queryTaskIdBySubTaskId" resultType="java.lang.String">
+        select mtp.LEVEL_KEY
+        from MCD_10088_PROJECT_LEVEL mtp
+        where mtp.ID = #{subTaskTypeId};
+    </select>
+
+</mapper>

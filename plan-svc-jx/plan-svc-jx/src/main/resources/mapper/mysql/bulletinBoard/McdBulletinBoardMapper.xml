@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.asiainfo.biapp.pec.plan.jx.hmh5.transplant.bulletinBoard.mapper.McdBulletinBoardMapper">
+    <!--    Page selectAllBulletins(Page page,@Param("bulletinParam")SelectBulletinBoardParam bulletinParam);-->
+    <select id="selectAllBulletins"
+            resultType="com.asiainfo.biapp.pec.plan.jx.hmh5.transplant.bulletinBoard.service.impl.resultInfo.SelectBulletinBoardResultInfo">
+        select b.*, u.USERNAME as createUsername from mcd_bulletin_board b
+            LEFT JOIN USER_USER u ON b.CREATE_USERID = u.USERID
+        <where>
+            <if test="bulletinParam.bulletinCode != null and bulletinParam.bulletinCode != ''">
+                AND b.BULLETIN_CODE LIKE '%'||#{bulletinParam.bulletinCode}||'%'
+            </if>
+            <if test="bulletinParam.bulletinContent != null and bulletinParam.bulletinContent != ''">
+                AND b.BULLETIN_TITLE LIKE '%'||#{bulletinParam.bulletinContent}||'%'
+                OR b.BULLETIN_CONTENT LIKE '%'||#{bulletinParam.bulletinContent}||'%'
+            </if>
+            <if test="bulletinParam.bulletinRule != null and bulletinParam.bulletinRule != ''">
+                AND b.BULLETIN_RULE = #{bulletinParam.bulletinRule}
+            </if>
+            <if test="bulletinParam.createUsername != null and bulletinParam.createUsername != ''">
+                AND u.create_username LIKE '%'||#{bulletinParam.createUsername}||'%'
+            </if>
+            <if test="bulletinParam.createTimeStart != null">
+                AND b.CREATE_TIME &gt;= #{bulletinParam.createTimeStart}
+            </if>
+            <if test="bulletinParam.createTimeEnd != null">
+                AND b.CREATE_TIME&lt;= #{bulletinParam.createTimeEnd}
+            </if>
+            <if test="bulletinParam.startTime != null">
+                AND b.START_TIME &gt;= #{bulletinParam.startTime}
+            </if>
+            <if test="bulletinParam.endTime != null">
+                AND b.END_TIME &lt;= #{bulletinParam.endTime}
+            </if>
+            <if test="bulletinParam.status != null">
+                AND b.STATUS = #{bulletinParam.status}
+            </if>
+        </where>
+        ORDER BY b.CREATE_TIME DESC
+    </select>
+
+
+</mapper>
+

@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.asiainfo.biapp.pec.plan.jx.intellpushprism.dao.IIntellPushPrismAIDao">
+
+    <select id="getChannelConfigByChannelId" resultType="com.asiainfo.biapp.pec.plan.jx.intellpushprism.entity.McdPrismChannelDefaultConfig">
+        select * from MCD_PRISM_CHANNEL_DEFAULT_CONFIG
+    </select>
+
+    <select id="getCampEvalTop5ByPlan" resultType="map">
+        select t.*,
+               mcd.CAMPSEG_ROOT_ID          campsegRootId,
+               mcd.CAMPSEG_NAME             campsegName,
+               case
+                   mcd.CAMPSEG_STAT_ID
+                   when 54 then '执行中'
+                   when 59 then '暂停'
+                   when 90 then '完成'
+                   when 91 then '终止' end as campsegStatId
+        from (
+                 select round(avg(SGMTNUM), 0)                                                                      totalNum,
+                        sum(JIECHU)                                                                                 contactNum,
+                        sum(CHENGGONG)                                                                              successNum,
+                        case when sum(JIECHU) = 0 then 0 else round(sum(CHENGGONG) * 100.0 / sum(JIECHU), 2) end as successRate,
+                        CAMPSEG_PID
+                 from MTL_CAMPSEG_EVAULATE mce
+                 where mce.PLAN_ID = #{planId}
+                 group by mce.CAMPSEG_PID) t
+                 left join mcd_camp_def mcd on t.CAMPSEG_PID = mcd.CAMPSEG_ROOT_ID
+        where mcd.CAMPSEG_STAT_ID in (54, 59, 90, 91)
+        order by mcd.CREATE_TIME desc
+        limit 5
+    </select>
+
+    <select id="getPlanTagIdsByPlanId" resultType="map">
+        select distinct TAG_ID tagId, TAG_NAME tagName, COLUMN_NUM columnNum from MCD_PRISM_PLAN_TAG
+        where PLAN_ID = #{planId}
+    </select>
+
+    <select id="getTagValueByTagIdAndPlanId" resultType="map">
+        select TAG_NAME tagName, TAG_VALUE tagValue, TAG_VALUE_CN tagValueCn, round(PROPORTION * 100, 4) proportion from MCD_PRISM_PLAN_TAG
+        where TAG_ID = #{tagId} and PLAN_ID = #{planId}
+        order by PROPORTION desc limit 10
+    </select>
+
+    <select id="getTagValueByColumnIdAndPlanId" resultType="map">
+        select * from MCD_PRISM_PLAN_TAG
+        where COLUMN_NUM = #{columnNum} and PLAN_ID = #{planId}
+    </select>
+
+    <select id="getCorrelationOnOriginTag" resultType="map">
+        select PLAN_ID, TAG_ID, TAG_NAME, TAG_VALUE, TAG_VALUE_CN, USER_NUM, PROPORTION sumPro, ALL_USER_NUM, ALL_PROPORTION sumAllPro from MCD_PRISM_PLAN_TAG
+        where PLAN_ID = #{planId} and COLUMN_NUM = #{columnNum} and TAG_VALUE in
+        <foreach collection="remarks" item="remark" open="(" close=")" separator=",">
+             #{remark}
+        </foreach>
+    </select>
+
+    <select id="getCorrelationOnNotEq" resultType="map">
+        select *, sum(PROPORTION) sumPro, sum(ALL_PROPORTION) sumAllPro from MCD_PRISM_PLAN_TAG
+        where PLAN_ID = #{planId} and COLUMN_NUM = #{columnNum} and TAG_VALUE not in
+        <foreach collection="remarks" item="remark" open="(" close=")" separator=",">
+             #{remark}
+        </foreach>
+    </select>
+
+    <select id="getCorrelationByTagIdAndPlanId" resultType="map">
+        select CORRELATION correlation from MCD_PRISM_PLAN_TAG_REL_DEGREE
+        where TAG_ID = #{tagId} and PLAN_ID = #{planId}
+    </select>
+
+    <select id="getAllTagIdPlanId" resultType="map">
+        select distinct PLAN_ID planId, TAG_ID tagId from MCD_PRISM_PLAN_TAG
+    </select>
+
+    <select id="calCorrelation" resultType="map">
+        select DATA_DATE dataDate, PLAN_ID planId, TAG_ID tagId, TAG_NAME tagName, case when ALL_PROPORTION = 0.0000 then 0.0000 else round((PROPORTION / ALL_PROPORTION) * 100, 4) end as correlation from MCD_PRISM_PLAN_TAG
+        where PLAN_ID = #{planId} AND TAG_ID = #{tagId}
+        order by PROPORTION desc limit 1
+    </select>
+
+    <insert id="saveBatchDegreeInfo2DB">
+        insert into MCD_PRISM_PLAN_TAG_REL_DEGREE(DATA_DATE, PLAN_ID, TAG_ID, TAG_NAME, CORRELATION) values
+        <foreach collection="degreeVOS" item="item" index="index" separator=",">
+            (
+                #{item.dataDate,jdbcType=VARCHAR}, #{item.planId,jdbcType=VARCHAR}, #{item.tagId,jdbcType=VARCHAR},
+                #{item.tagName,jdbcType=VARCHAR}, #{item.correlation,jdbcType=DOUBLE}
+            )
+        </foreach>
+    </insert>
+
+    <delete id="deleteBatchDegreeInfo">
+        delete from MCD_PRISM_PLAN_TAG_REL_DEGREE
+        where PLAN_ID in
+        <foreach collection="planIds" item="planId" separator="," open="(" close=")">
+            #{planId}
+        </foreach>
+    </delete>
+
+    <select id="getThirtyDaysCampEvalByPlandId" resultType="map">
+        select PLAN_ID, CAMPSEG_ID from prism_campseg_evaulate_thirty_days
+        where PLAN_ID in
+        <foreach collection="planIds" item="planId" separator="," open="(" close=")">
+            #{planId}
+        </foreach>
+<!--        group by CAMPSEG_ID, RATE-->
+<!--        order by RATE-->
+    </select>
+
+    <select id="getExtByCampsegRootIdAndChannelId" resultType="com.asiainfo.biapp.pec.plan.jx.intellpushprism.vo.PrismChannelConfigVO">
+        select mcce.*, mccl.CAMPSEG_ID, mccl.PLAN_ID, mccl.CHANNEL_ID, mccl.FREQUENCY, mccl.EXEC_CONTENT, mdai.ADIV_ID, mdai.ADIV_NAME
+            from mcd_camp_channel_list mccl
+            left join mcd_camp_channel_ext mcce on mccl.CAMPSEG_ID = mcce.CAMPSEG_ID
+            left join mcd_dim_adiv_info mdai on mdai.ADIV_ID = mccl.CHANNEL_ADIV_ID
+            where mccl.CAMPSEG_ID in
+            <foreach collection="campsegIdList" item="campsegId" separator="," open="(" close=")">
+                #{campsegId}
+            </foreach>
+<!--            and mccl.CHANNEL_ID in-->
+<!--            <foreach collection="channelIdList" item="channelId" separator="," open="(" close=")">-->
+<!--                #{channelId}-->
+<!--            </foreach>-->
+    </select>
+
+</mapper>

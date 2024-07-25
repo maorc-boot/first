@@ -1,0 +1,557 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.asiainfo.biapp.pec.plan.jx.hmh5.dao.McdFrontUsageDao">
+
+    <resultMap id="frontUsageMap" type="com.asiainfo.biapp.pec.plan.jx.hmh5.vo.McdFrontUsageInfo">
+        <result column="LEVEL_ID" property="levelId" ></result>
+        <result column="LEVEL_NAME" property="levelName" ></result>
+        <result column="ORG_NUM" property="orgNum" ></result>
+        <result column="STAFF_NUM" property="staffNum" ></result>
+        <result column="CAN_CALL_NUM" property="canCallNum" ></result>
+        <result column="CAN_CALL_RATE" property="canCallRate" ></result>
+        <result column="ORG_LOGIN_NUM" property="orgLoginNum" ></result>
+        <result column="ORG_JOIN_RATE" property="orgJoinRate" ></result>
+        <result column="STAFF_LOGIN_M_COUNT" property="staffLoginMCount" ></result>
+        <result column="STAFF_LOGIN_M_SUM" property="staffLoginMNum" ></result>
+        <result column="STAFF_LOGIN_AVG" property="staffLoginAvg" ></result>
+        <result column="TASK_ALL" property="taskAll" ></result>
+        <result column="CAMP_DEAL_NUM" property="campDealNum" ></result>
+        <result column="TASK_MONTH_DEAL" property="taskMonthDeal" ></result>
+        <result column="TASK_TOTAL_DEAL" property="taskTotalDeal" ></result>
+        <result column="EF_CAMP_NUM_M" property="efCampNumM" ></result>
+        <result column="BPR_BUSI_NUM" property="bprBusiNum" ></result>
+        <result column="BPR_SUCC_M" property="bprSuccM" ></result>
+        <result column="BPR_SUCC_T" property="bprSuccT" ></result>
+        <result column="ORG_JOIN_RATE" property="orgJoinRate" ></result>
+        <result column="CALL_NUM" property="callNum" ></result>
+        <result column="CALL_NUM_M" property="callNumM" ></result>
+        <result column="CALL_SUCC_M" property="callSuccNum" ></result>
+        <result column="SMS_SEND_M" property="smsSendNum" ></result>
+
+    </resultMap>
+    
+    
+    <select id="queryCityUsageInfo" resultMap="frontUsageMap" >
+ 
+     SELECT L.CITY_NAME                                                                LEVEL_NAME,
+       L.CITY_ID                                                                  LEVEL_ID,
+       NVL(A.ORG_NUM, 0)                                                          ORG_NUM,
+       NVL(A.STAFF_NUM, 0)                                                        STAFF_NUM,
+       NVL(A.CAN_CALL_NUM, 0)                                                     CAN_CALL_NUM,
+       CASE A.STAFF_NUM  WHEN 0 THEN 0 WHEN NULL THEN 0 ELSE ROUND(A.CAN_CALL_NUM / A.STAFF_NUM, 3) END CAN_CALL_RATE,
+       NVL(A.ORG_LOGIN_NUM, 0)                                                    ORG_LOGIN_NUM,
+       CASE A.ORG_NUM  WHEN 0 THEN 0 WHEN NULL THEN 0 ELSE ROUND(A.ORG_LOGIN_NUM / A.ORG_NUM, 3) END ORG_JOIN_RATE,
+       NVL(A.STAFF_LOGIN_M_COUNT, 0)                                              STAFF_LOGIN_M_COUNT,
+       NVL(A.STAFF_LOGIN_M_SUM, 0)                                                STAFF_LOGIN_M_SUM,
+       CASE A.STAFF_LOGIN_M_COUNT  WHEN 0 THEN 0 WHEN NULL THEN 0 ELSE ROUND(A.STAFF_LOGIN_M_SUM / A.STAFF_LOGIN_M_COUNT, 3) END STAFF_LOGIN_AVG,
+       NVL(A.TASK_ALL, 0)                                                         TASK_ALL,
+       NVL(A.CAMP_DEAL_NUM, 0)                                                    CAMP_DEAL_NUM,
+       NVL(A.TASK_MONTH_DEAL, 0)                                                  TASK_MONTH_DEAL,
+       NVL(A.TASK_TOTAL_DEAL, 0)                                                  TASK_TOTAL_DEAL,
+       NVL(A.EF_CAMP_NUM_M, 0)                                                    EF_CAMP_NUM_M,
+       NVL(A.BPR_BUSI_NUM, 0)                                                     BPR_BUSI_NUM,
+       NVL(A.BPR_SUCC_M, 0)                                                       BPR_SUCC_M,
+       NVL(A.BPR_SUCC_T, 0)                                                       BPR_SUCC_T,
+       NVL(A.CALL_NUM, 0)                                                         CALL_NUM,
+       NVL(A.CALL_NUM_M, 0)                                                       CALL_NUM_M,
+       CASE A.CALL_NUM_M  WHEN 0 THEN 0 WHEN NULL THEN 0 ELSE ROUND(A.BPR_SUCC_M / A.CALL_NUM_M, 3) END BPR_SUCC_RATE,
+       NVL(A.CALL_SUCC_M, 0)                                                      CALL_SUCC_M,
+       NVL(A.SMS_SEND_M, 0)                                                       SMS_SEND_M
+       FROM (SELECT M.CITY_ID,
+             SUM(M.ORG_NUM)             ORG_NUM,
+             SUM(M.STAFF_NUM)           STAFF_NUM,
+             SUM(M.CAN_CALL_NUM)        CAN_CALL_NUM,
+             SUM(M.STAFF_LOGIN_M_COUNT) STAFF_LOGIN_M_COUNT,
+             SUM(M.STAFF_LOGIN_M_SUM)   STAFF_LOGIN_M_SUM,
+             SUM(M.ORG_LOGIN_NUM)       ORG_LOGIN_NUM,
+             SUM(TASK_ALL)              TASK_ALL,
+             SUM(M.CAMP_DEAL_NUM)       CAMP_DEAL_NUM,
+             SUM(M.TASK_MONTH_DEAL)     TASK_MONTH_DEAL,
+             SUM(M.TASK_TOTAL_DEAL)     TASK_TOTAL_DEAL,
+             SUM(M.EF_CAMP_NUM_M)       EF_CAMP_NUM_M,
+             SUM(M.BPR_BUSI_NUM)        BPR_BUSI_NUM,
+             SUM(M.BPR_SUCC_M)          BPR_SUCC_M,
+             SUM(M.BPR_SUCC_T)          BPR_SUCC_T,
+             SUM(M.CALL_NUM)            CALL_NUM,
+             SUM(M.CALL_NUM_M)          CALL_NUM_M,
+             SUM(M.CALL_SUCC_M)         CALL_SUCC_M,
+             SUM(M.SMS_MONTH)           SMS_SEND_M
+      FROM REPORT_CHANNEL_SUMMARY M
+      WHERE M.DATA_DATE between  TO_DATE(#{req.startTime}, 'yyyy/mm/dd') and  TO_DATE(#{req.endTime}, 'yyyy/mm/dd')
+      GROUP BY M.CITY_ID
+      union all SELECT '999'                      CITY_ID,
+                       SUM(M.ORG_NUM)             ORG_NUM,
+                       SUM(M.STAFF_NUM)           STAFF_NUM,
+                       SUM(M.CAN_CALL_NUM)        CAN_CALL_NUM,
+                       SUM(M.STAFF_LOGIN_M_COUNT) STAFF_LOGIN_M_COUNT,
+                       SUM(M.STAFF_LOGIN_M_SUM)   STAFF_LOGIN_M_SUM,
+                       SUM(M.ORG_LOGIN_NUM)       ORG_LOGIN_NUM,
+                       SUM(TASK_ALL)              TASK_ALL,
+                       SUM(M.CAMP_DEAL_NUM)       CAMP_DEAL_NUM,
+                       SUM(M.TASK_MONTH_DEAL)     TASK_MONTH_DEAL,
+                       SUM(M.TASK_TOTAL_DEAL)     TASK_TOTAL_DEAL,
+                       SUM(M.EF_CAMP_NUM_M)       EF_CAMP_NUM_M,
+                       SUM(M.BPR_BUSI_NUM)        BPR_BUSI_NUM,
+                       SUM(M.BPR_SUCC_M)          BPR_SUCC_M,
+                       SUM(M.BPR_SUCC_T)          BPR_SUCC_T,
+                       SUM(M.CALL_NUM)            CALL_NUM,
+                       SUM(M.CALL_NUM_M)          CALL_NUM_M,
+                       SUM(M.CALL_SUCC_M)         CALL_SUCC_M,
+                       SUM(M.SMS_MONTH)           SMS_SEND_M
+                FROM REPORT_CHANNEL_SUMMARY M
+                WHERE M.DATA_DATE between  TO_DATE(#{req.startTime}, 'yyyy/mm/dd') and  TO_DATE(#{req.endTime}, 'yyyy/mm/dd') ) A
+       INNER JOIN mcd_dim_city L ON A.CITY_ID = L.CITY_ID
+       <if test="req.cityIdOrName != null and req.cityIdOrName != ''">
+           WHERE A.CITY_ID LIKE '%'||#{req.cityIdOrName}||'%'
+           OR  L.CITY_NAME LIKE '%'||#{req.cityIdOrName}||'%'
+       </if>
+       ORDER BY L.CITY_ID ASC
+    </select>
+
+    <select id="queryCountyUsageInfo" resultMap="frontUsageMap" >
+
+     SELECT L.COUNTY_NAME                                                          LEVEL_NAME,
+       L.COUNTY_ID                                                                  LEVEL_ID,
+       NVL(A.ORG_NUM, 0)                                                          ORG_NUM,
+       NVL(A.STAFF_NUM, 0)                                                        STAFF_NUM,
+       NVL(A.CAN_CALL_NUM, 0)                                                     CAN_CALL_NUM,
+       CASE A.STAFF_NUM  WHEN 0 THEN 0 WHEN NULL THEN 0 ELSE ROUND(A.CAN_CALL_NUM / A.STAFF_NUM, 3) END CAN_CALL_RATE,
+       NVL(A.ORG_LOGIN_NUM, 0)                                                    ORG_LOGIN_NUM,
+       CASE A.ORG_NUM  WHEN 0 THEN 0 WHEN NULL THEN 0 ELSE ROUND(A.ORG_LOGIN_NUM / A.ORG_NUM, 3) END ORG_JOIN_RATE,
+       NVL(A.STAFF_LOGIN_M_COUNT, 0)                                              STAFF_LOGIN_M_COUNT,
+       NVL(A.staff_login_m_sum, 0)                                                staff_login_m_sum,
+       CASE A.STAFF_LOGIN_M_COUNT  WHEN 0 THEN 0 WHEN NULL THEN 0 ELSE ROUND(A.STAFF_LOGIN_M_SUM / A.STAFF_LOGIN_M_COUNT, 3) END STAFF_LOGIN_AVG,
+       NVL(A.TASK_ALL, 0)                                                         TASK_ALL,
+       NVL(A.CAMP_DEAL_NUM, 0)                                                    CAMP_DEAL_NUM,
+       NVL(A.TASK_MONTH_DEAL, 0)                                                  TASK_MONTH_DEAL,
+       NVL(A.TASK_TOTAL_DEAL, 0)                                                  TASK_TOTAL_DEAL,
+       NVL(A.EF_CAMP_NUM_M, 0)                                                    EF_CAMP_NUM_M,
+       NVL(A.BPR_BUSI_NUM, 0)                                                     BPR_BUSI_NUM,
+       NVL(A.BPR_SUCC_M, 0)                                                       BPR_SUCC_M,
+       NVL(A.BPR_SUCC_T, 0)                                                       BPR_SUCC_T,
+       NVL(A.CALL_NUM, 0)                                                         CALL_NUM,
+       NVL(A.CALL_NUM_M, 0)                                                       CALL_NUM_M,
+       CASE A.CALL_NUM_M  WHEN 0 THEN 0 WHEN NULL THEN 0 ELSE ROUND(A.BPR_SUCC_M / A.CALL_NUM_M, 3) END BPR_SUCC_RATE,
+       NVL(A.CALL_SUCC_M, 0)                                                      CALL_SUCC_M,
+       NVL(A.SMS_SEND_M, 0)                                                       SMS_SEND_M
+   FROM (SELECT M.COUNTY_ID,
+             SUM(M.ORG_NUM)             ORG_NUM,
+             SUM(M.STAFF_NUM)           STAFF_NUM,
+             SUM(M.CAN_CALL_NUM)        CAN_CALL_NUM,
+             SUM(M.STAFF_LOGIN_M_COUNT) STAFF_LOGIN_M_COUNT,
+             SUM(M.STAFF_LOGIN_M_SUM)   STAFF_LOGIN_M_SUM,
+             SUM(M.ORG_LOGIN_NUM)       ORG_LOGIN_NUM,
+             SUM(TASK_ALL)              TASK_ALL,
+             SUM(M.CAMP_DEAL_NUM)       CAMP_DEAL_NUM,
+             SUM(M.TASK_MONTH_DEAL)     TASK_MONTH_DEAL,
+             SUM(M.TASK_TOTAL_DEAL)     TASK_TOTAL_DEAL,
+             SUM(M.EF_CAMP_NUM_M)       EF_CAMP_NUM_M,
+             SUM(M.BPR_BUSI_NUM)        BPR_BUSI_NUM,
+             SUM(M.BPR_SUCC_M)          BPR_SUCC_M,
+             SUM(M.BPR_SUCC_T)          BPR_SUCC_T,
+             SUM(M.CALL_NUM)            CALL_NUM,
+             SUM(M.CALL_NUM_M)          CALL_NUM_M,
+             SUM(M.CALL_SUCC_M)         CALL_SUCC_M,
+             SUM(M.SMS_MONTH)           SMS_SEND_M
+      FROM REPORT_CHANNEL_SUMMARY M
+      WHERE M.DATA_DATE between TO_DATE(#{req.startTime}, 'yyyy/mm/dd') and  TO_DATE(#{req.endTime}, 'yyyy/mm/dd')
+      GROUP BY M.COUNTY_ID ) A
+      INNER JOIN dim_pub_county L ON A.COUNTY_ID = L.COUNTY_ID
+
+        <if test="req.countyIdOrName != null and req.countyIdOrName != ''">
+            WHERE A.COUNTY_ID LIKE '%'||#{req.countyIdOrName}||'%'
+            OR  L.COUNTY_NAME LIKE '%'||#{req.countyIdOrName}||'%'
+        </if>
+
+      ORDER BY L.COUNTY_ID ASC
+    </select>
+
+    <select id="queryChannelUsageInfo" resultMap="frontUsageMap" >
+
+
+      SELECT L.CHANNEL_NAME                                                        LEVEL_NAME,
+       L.CHANNEL_ID                                                                  LEVEL_ID,
+       NVL(A.ORG_NUM, 0)                                                          ORG_NUM,
+       NVL(A.STAFF_NUM, 0)                                                        STAFF_NUM,
+       NVL(A.CAN_CALL_NUM, 0)                                                     CAN_CALL_NUM,
+       CASE A.STAFF_NUM  WHEN 0 THEN 0 WHEN NULL THEN 0 ELSE ROUND(A.CAN_CALL_NUM / A.STAFF_NUM, 3) END CAN_CALL_RATE,
+       NVL(A.ORG_LOGIN_NUM, 0)                                                    ORG_LOGIN_NUM,
+       CASE A.ORG_NUM  WHEN 0 THEN 0 WHEN NULL THEN 0 ELSE ROUND(A.ORG_LOGIN_NUM / A.ORG_NUM, 3) END ORG_JOIN_RATE,
+       NVL(A.STAFF_LOGIN_M_COUNT, 0)                                              STAFF_LOGIN_M_COUNT,
+       NVL(A.staff_login_m_sum, 0)                                                staff_login_m_sum,
+       CASE A.STAFF_LOGIN_M_COUNT  WHEN 0 THEN 0 WHEN NULL THEN 0 ELSE ROUND(A.STAFF_LOGIN_M_SUM / A.STAFF_LOGIN_M_COUNT, 3) END STAFF_LOGIN_AVG,
+       NVL(A.TASK_ALL, 0)                                                         TASK_ALL,
+       NVL(A.CAMP_DEAL_NUM, 0)                                                    CAMP_DEAL_NUM,
+       NVL(A.TASK_MONTH_DEAL, 0)                                                  TASK_MONTH_DEAL,
+       NVL(A.TASK_TOTAL_DEAL, 0)                                                  TASK_TOTAL_DEAL,
+       NVL(A.EF_CAMP_NUM_M, 0)                                                    EF_CAMP_NUM_M,
+       NVL(A.BPR_BUSI_NUM, 0)                                                     BPR_BUSI_NUM,
+       NVL(A.BPR_SUCC_M, 0)                                                       BPR_SUCC_M,
+       NVL(A.BPR_SUCC_T, 0)                                                       BPR_SUCC_T,
+       NVL(A.CALL_NUM, 0)                                                         CALL_NUM,
+       NVL(A.CALL_NUM_M, 0)                                                       CALL_NUM_M,
+       CASE A.CALL_NUM_M  WHEN 0 THEN 0 WHEN NULL THEN 0 ELSE ROUND(A.BPR_SUCC_M / A.CALL_NUM_M, 3) END BPR_SUCC_RATE,
+       NVL(A.CALL_SUCC_M, 0)                                                      CALL_SUCC_M,
+       NVL(A.SMS_SEND_M, 0)                                                       SMS_SEND_M
+FROM (SELECT M.CHANNEL_ID,
+             SUM(M.ORG_NUM)             ORG_NUM,
+             SUM(M.STAFF_NUM)           STAFF_NUM,
+             SUM(M.CAN_CALL_NUM)        CAN_CALL_NUM,
+             SUM(M.STAFF_LOGIN_M_COUNT) STAFF_LOGIN_M_COUNT,
+             SUM(M.STAFF_LOGIN_M_SUM)   STAFF_LOGIN_M_SUM,
+             SUM(M.ORG_LOGIN_NUM)       ORG_LOGIN_NUM,
+             SUM(TASK_ALL)              TASK_ALL,
+             SUM(M.CAMP_DEAL_NUM)       CAMP_DEAL_NUM,
+             SUM(M.TASK_MONTH_DEAL)     TASK_MONTH_DEAL,
+             SUM(M.TASK_TOTAL_DEAL)     TASK_TOTAL_DEAL,
+             SUM(M.EF_CAMP_NUM_M)       EF_CAMP_NUM_M,
+             SUM(M.BPR_BUSI_NUM)        BPR_BUSI_NUM,
+             SUM(M.BPR_SUCC_M)          BPR_SUCC_M,
+             SUM(M.BPR_SUCC_T)          BPR_SUCC_T,
+             SUM(M.CALL_NUM)            CALL_NUM,
+             SUM(M.CALL_NUM_M)          CALL_NUM_M,
+             SUM(M.CALL_SUCC_M)         CALL_SUCC_M,
+             SUM(M.SMS_MONTH)           SMS_SEND_M
+      FROM  REPORT_CHANNEL_SUMMARY M
+      WHERE M.DATA_DATE between TO_DATE(#{req.startTime}, 'yyyy/mm/dd') and  TO_DATE(#{req.endTime}, 'yyyy/mm/dd')
+      GROUP BY M.CHANNEL_ID ) A
+      INNER JOIN MCD_FRONT_LINE_CHANNEL L ON A.CHANNEL_ID = L.CHANNEL_ID
+        <if test="req.channelIdOrName != null and req.channelIdOrName != ''">
+            WHERE A.CHANNEL_ID LIKE '%'||#{req.channelIdOrName}||'%'
+            OR  L.CHANNEL_NAME LIKE '%'||#{req.channelIdOrName}||'%'
+        </if>
+
+      ORDER BY L.CHANNEL_ID ASC
+    </select>
+
+    <select id="queryGridUsageInfo" resultMap="frontUsageMap" >
+
+
+    SELECT L.GRID_NAME                                                                LEVEL_NAME,
+       L.GRID_CODE                                                                  LEVEL_ID,
+       NVL(A.ORG_NUM, 0)                                                          ORG_NUM,
+       NVL(A.STAFF_NUM, 0)                                                        STAFF_NUM,
+       NVL(A.CAN_CALL_NUM, 0)                                                     CAN_CALL_NUM,
+       CASE A.STAFF_NUM  WHEN 0 THEN 0 WHEN NULL THEN 0 ELSE ROUND(A.CAN_CALL_NUM / A.STAFF_NUM, 3) END CAN_CALL_RATE,
+       NVL(A.ORG_LOGIN_NUM, 0)                                                    ORG_LOGIN_NUM,
+       CASE A.ORG_NUM  WHEN 0 THEN 0 WHEN NULL THEN 0 ELSE ROUND(A.ORG_LOGIN_NUM / A.ORG_NUM, 3) END ORG_JOIN_RATE,
+       NVL(A.STAFF_LOGIN_M_COUNT, 0)                                              STAFF_LOGIN_M_COUNT,
+       NVL(A.staff_login_m_sum, 0)                                                staff_login_m_sum,
+       CASE A.STAFF_LOGIN_M_COUNT  WHEN 0 THEN 0 WHEN NULL THEN 0 ELSE ROUND(A.STAFF_LOGIN_M_SUM / A.STAFF_LOGIN_M_COUNT, 3) END STAFF_LOGIN_AVG,
+       NVL(A.TASK_ALL, 0)                                                         TASK_ALL,
+       NVL(A.CAMP_DEAL_NUM, 0)                                                    CAMP_DEAL_NUM,
+       NVL(A.TASK_MONTH_DEAL, 0)                                                  TASK_MONTH_DEAL,
+       NVL(A.TASK_TOTAL_DEAL, 0)                                                  TASK_TOTAL_DEAL,
+       NVL(A.EF_CAMP_NUM_M, 0)                                                    EF_CAMP_NUM_M,
+       NVL(A.BPR_BUSI_NUM, 0)                                                     BPR_BUSI_NUM,
+       NVL(A.BPR_SUCC_M, 0)                                                       BPR_SUCC_M,
+       NVL(A.BPR_SUCC_T, 0)                                                       BPR_SUCC_T,
+       NVL(A.CALL_NUM, 0)                                                         CALL_NUM,
+       NVL(A.CALL_NUM_M, 0)                                                       CALL_NUM_M,
+       CASE A.CALL_NUM_M  WHEN 0 THEN 0 WHEN NULL THEN 0 ELSE ROUND(A.BPR_SUCC_M / A.CALL_NUM_M, 3) END BPR_SUCC_RATE,
+       NVL(A.CALL_SUCC_M, 0)                                                      CALL_SUCC_M,
+       NVL(A.SMS_SEND_M, 0)                                                       SMS_SEND_M
+     FROM (SELECT M.GRID_CODE,
+             SUM(M.ORG_NUM)             ORG_NUM,
+             SUM(M.STAFF_NUM)           STAFF_NUM,
+             SUM(M.CAN_CALL_NUM)        CAN_CALL_NUM,
+             SUM(M.STAFF_LOGIN_M_COUNT) STAFF_LOGIN_M_COUNT,
+             SUM(M.STAFF_LOGIN_M_SUM)   STAFF_LOGIN_M_SUM,
+             SUM(M.ORG_LOGIN_NUM)       ORG_LOGIN_NUM,
+             SUM(TASK_ALL)              TASK_ALL,
+             SUM(M.CAMP_DEAL_NUM)       CAMP_DEAL_NUM,
+             SUM(M.TASK_MONTH_DEAL)     TASK_MONTH_DEAL,
+             SUM(M.TASK_TOTAL_DEAL)     TASK_TOTAL_DEAL,
+             SUM(M.EF_CAMP_NUM_M)       EF_CAMP_NUM_M,
+             SUM(M.BPR_BUSI_NUM)        BPR_BUSI_NUM,
+             SUM(M.BPR_SUCC_M)          BPR_SUCC_M,
+             SUM(M.BPR_SUCC_T)          BPR_SUCC_T,
+             SUM(M.CALL_NUM)            CALL_NUM,
+             SUM(M.CALL_NUM_M)          CALL_NUM_M,
+             SUM(M.CALL_SUCC_M)         CALL_SUCC_M,
+             SUM(M.SMS_MONTH)           SMS_SEND_M
+      FROM  REPORT_CHANNEL_SUMMARY M
+      WHERE M.DATA_DATE between TO_DATE(#{req.startTime}, 'yyyy/mm/dd') and  TO_DATE(#{req.endTime}, 'yyyy/mm/dd')
+      GROUP BY M.GRID_CODE ) A
+      INNER JOIN mcd_gen_grid_info L ON A.GRID_CODE = L.GRID_CODE
+        <if test="req.gridCodeOrName != null and req.gridCodeOrName != ''">
+            WHERE A.GRID_CODE LIKE '%'||#{req.gridCodeOrName}||'%'
+            OR  L.GRID_NAME LIKE '%'||#{req.gridCodeOrName}||'%'
+        </if>
+
+      ORDER BY L.GRID_CODE ASC
+    </select>
+
+
+    <resultMap id="frontUsageHandleSummaryMap" type="com.asiainfo.biapp.pec.plan.jx.hmh5.vo.McdFrontUsageSummaryInfo">
+        <result column="CHANNEL_ID" property="channelId" ></result>
+        <result column="CHANNEL_NAME" property="channelName" ></result>
+        <result column="CITY_ID" property="cityId" ></result>
+        <result column="CITY_NAME" property="cityName" ></result>
+        <result column="COUNTY_ID" property="countyId" ></result>
+        <result column="COUNTY_NAME" property="countyName" ></result>
+        <result column="STAFF_ID" property="staffId" ></result>
+        <result column="STAFF_NAME" property="staffName" ></result>
+        <result column="CALLING_NUM" property="callingNum" ></result>
+        <result column="CALL_FLAG" property="callFlag" ></result>
+        <result column="DATA_DATE" property="dataDate" ></result>
+        <result column="IS_SELF_MANAGER" property="isSelfManager" ></result>
+        <result column="JOIN_STAFF_M" property="joinStaffM" ></result>
+        <result column="LOGIN_CHANNEL" property="loginChannel" ></result>
+        <result column="LOGIN_COUNT" property="loginCount" ></result>
+        <result column="LOGIN_COUNT_M" property="loginCountM" ></result>
+        <result column="LOGIN_STAFF" property="loginStaff" ></result>
+        <result column="STAFF_TASK" property="staffTask" ></result>
+        <result column="CHANNEL_SHARE_TASK" property="channelShareTask" ></result>
+        <result column="TASK_MONTH_DEAL" property="taskMonthDeal" ></result>
+        <result column="TASK_TOTAL_DEAL" property="taskTotalDeal" ></result>
+        <result column="EF_CAMP_NUM_M" property="efCampNumM" ></result>
+        <result column="BPR_BUSI_NUM" property="bprBusiNum" ></result>
+        <result column="BPR_SUCC_M" property="bprSuccM" ></result>
+        <result column="BPR_SUCC_T" property="bprSuccT" ></result>
+        <result column="CALL_NUM_M" property="callNumM" ></result>
+        <result column="CALL_SUCC_M" property="callSuccM" ></result>
+        <result column="SMS_SEND_M" property="smsMonthM" ></result>
+
+    </resultMap>
+
+    <select id="queryCampsegHandleSummary" resultMap="frontUsageHandleSummaryMap" >
+
+        SELECT
+               A.CHANNEL_ID,
+        CHANNEL.CHANNEL_NAME,
+        A.CITY_ID,
+        CITY.CITY_NAME,
+        A.COUNTY_ID,
+        COUNTY.COUNTY_NAME,
+        A.STAFF_ID,
+        A.STAFF_NAME,
+        A.CALLING_NUM,
+        A.CALL_FLAG,
+        A.DATA_DATE,
+        A.IS_SELF_MANAGER,
+        A.JOIN_STAFF_M,
+        A.LOGIN_CHANNEL,
+        NVL(A.LOGIN_COUNT, 0)        LOGIN_COUNT,
+        NVL(A.LOGIN_COUNT_M, 0)      LOGIN_COUNT_M,
+        A.LOGIN_STAFF,
+        NVL(A.STAFF_TASK, 0)         STAFF_TASK,
+        NVL(A.CHANNEL_SHARE_TASK, 0) CHANNEL_SHARE_TASK,
+        NVL(A.TASK_MONTH_DEAL, 0)    TASK_MONTH_DEAL,
+        NVL(A.TASK_TOTAL_DEAL, 0)    TASK_TOTAL_DEAL,
+        NVL(A.EF_CAMP_NUM_M, 0)      EF_CAMP_NUM_M,
+        NVL(A.BPR_BUSI_NUM, 0)       BPR_BUSI_NUM,
+        NVL(A.BPR_SUCC_M, 0)         BPR_SUCC_M,
+        NVL(A.BPR_SUCC_T, 0)         BPR_SUCC_T,
+        NVL(A.CALL_NUM_M, 0)         CALL_NUM_M,
+        NVL(B.CALL_SUCC_M, 0)        CALL_SUCC_M,
+        NVL(B.SMS_SEND_M, 0)         SMS_SEND_M
+        FROM (SELECT S.* FROM  REPORT_STAFF_ALL_SUMMARY S WHERE S.DATA_DATE =  TO_DATE(#{req.dataDate}, 'yyyy/mm/dd')
+
+        <if test="req.staffIdOrName != null and  req.staffIdOrName !=''">
+
+            and ( S.STAFF_ID like '%'||#{req.staffIdOrName}||'%' or  S.STAFF_NAME like '%'||#{req.staffIdOrName}||'%')
+        </if>
+
+        <if test="req.channelIdOrName != null and  req.channelIdOrName !=''">
+
+            and ( S.CHANNEL_ID like '%'||#{req.channelIdOrName}||'%' or CHANNEL.CHANNEL_NAME like '%'||#{req.channelIdOrName}||'%')
+        </if>
+
+        <if test="req.cityIdOrName != null and  req.cityIdOrName !=''">
+
+            and  ( S.CITY_ID  like '%'||#{req.cityIdOrName}||'%' or CITY.CITY_NAME  like '%'||#{req.cityIdOrName}||'%' )
+        </if>
+
+        <if test="req.countyIdOrName != null and  req.countyIdOrName !=''">
+
+            and ( S.COUNTY_ID like '%'||#{req.countyIdOrName}||'%' or  COUNTY.COUNTY_NAME like '%'||#{req.countyIdOrName}||'%')
+        </if>
+
+        ) A
+        LEFT JOIN (SELECT B1.STAFF_ID, SUM(B1.CALL_SUCC_NUM) CALL_SUCC_M, SUM(B1.SMS_SEND_NUM) SMS_SEND_M
+        FROM  REPORT_STAFF_ALL_SUMMARY B1
+        WHERE B1.DATA_DATE  &lt;= TO_DATE(#{req.dataDate}, 'yyyy/mm/dd')
+        AND B1.DATA_DATE &gt;=  TO_DATE(#{req.dataDate}, 'yyyy/mm/dd')
+        GROUP BY B1.STAFF_ID) B ON B.STAFF_ID = A.STAFF_ID
+        LEFT JOIN MCD_FRONT_LINE_CHANNEL CHANNEL ON CHANNEL.CHANNEL_ID = A.CHANNEL_ID
+        LEFT JOIN dim_pub_county COUNTY ON COUNTY.COUNTY_ID = A.COUNTY_ID
+        LEFT JOIN mcd_dim_city CITY ON CITY.CITY_ID = A.CITY_ID
+        WHERE CITY.CITY_ID IS NOT NULL
+        AND COUNTY.COUNTY_ID IS NOT NULL
+        AND CHANNEL.CHANNEL_ID IS NOT NULL
+
+        <if test="req.channelIdOrName != null and  req.channelIdOrName !=''">
+
+            and   (CHANNEL.CHANNEL_ID like '%'||#{req.channelIdOrName}||'%' or CHANNEL.CHANNEL_NAME like '%'||#{req.channelIdOrName}||'%')
+        </if>
+
+        <if test="req.cityIdOrName != null and  req.cityIdOrName !=''">
+
+            and  (CITY.CITY_ID  like '%'||#{req.cityIdOrName}||'%' or CITY.CITY_NAME  like '%'||#{req.cityIdOrName}||'%')
+        </if>
+
+        <if test="req.countyIdOrName != null and  req.countyIdOrName !=''">
+
+            and  ( COUNTY.COUNTY_ID like '%'||#{req.countyIdOrName}||'%' or COUNTY.COUNTY_NAME like '%'||#{req.countyIdOrName}||'%')
+        </if>
+
+    </select>
+
+
+
+
+    <resultMap id="frontUsageHandleDetailMap" type="com.asiainfo.biapp.pec.plan.jx.hmh5.vo.McdFrontUsageDetailInfo">
+
+        <result column="data_date" property="dataDate" ></result>
+        <result column="campseg_name" property="campsegName" ></result>
+        <result column="start_date" property="startDate" ></result>
+        <result column="end_date" property="endDate" ></result>
+        <result column="campseg_id" property="campsegId" ></result>
+        <result column="create_userid" property="createUserId" ></result>
+        <result column="create_username" property="createUserName" ></result>
+        <result column="campseg_desc" property="campsegDesc" ></result>
+        <result column="camp_city_id" property="campCityId" ></result>
+        <result column="camp_city_name" property="campCityName" ></result>
+        <result column="deptid" property="deptId" ></result>
+        <result column="dept_name" property="deptName" ></result>
+        <result column="city_id" property="cityId" ></result>
+        <result column="city_name" property="cityName" ></result>
+        <result column="task_count" property="taskCount" ></result>
+        <result column="camp_call_num" property="campCallNum" ></result>
+        <result column="camp_deal_num" property="campDealNum" ></result>
+        <result column="camp_call_succ" property="campCallSucc" ></result>
+        <result column="camp_call_total" property="campCallTotal" ></result>
+        <result column="camp_deal_total" property="campDealTotal" ></result>
+        <result column="camp_call_succ_total" property="campCallSuccTotal" ></result>
+
+    </resultMap>
+
+
+
+    <select id="queryCampsegHandleDetail" resultMap="frontUsageHandleDetailMap" >
+
+        SELECT A.data_date,
+       A.campseg_name,
+       A.start_date,
+       A.end_date,
+       A.campseg_id,
+       A.create_userid,
+       A.create_username,
+       A.campseg_desc,
+       A.camp_city_id,
+       A.camp_city_name,
+       A.deptid,
+       A.dept_name,
+       A.city_id,
+       A.city_name,
+       NVL(A.task_count, 0)           task_count,
+       NVL(A.camp_call_num, 0)        camp_call_num,
+       NVL(A.camp_deal_num, 0)        camp_deal_num,
+       NVL(A.camp_call_succ, 0)       camp_call_succ,
+       NVL(A.camp_call_total, 0)      camp_call_total,
+       NVL(A.camp_deal_total, 0)      camp_deal_total,
+       NVL(A.camp_call_succ_total, 0) camp_call_succ_total
+        FROM  REPORT_CAMP_CITY_HANDLE A
+        WHERE 1 = 1
+        <if test="req.cityIdOrName != null and  req.cityIdOrName !=''">
+
+            and ( A.CITY_NAME like '%'||#{req.cityIdOrName}||'%' or  A.CITY_ID like '%'||#{req.cityIdOrName}||'%')
+        </if>
+
+        <if test="req.campsegIdOrName != null and  req.campsegIdOrName !=''">
+
+            and ( A.CAMPSEG_ID like '%'||#{req.campsegIdOrName}||'%' or  A.CAMPSEG_NAME like '%'||#{req.campsegIdOrName}||'%')
+        </if>
+
+          AND A.DATA_DATE = TO_DATE(#{req.dataDate}, 'yyyy/mm/dd')
+
+        order by START_DATE desc
+
+    </select>
+
+
+
+    <resultMap id="frontUsageOppoHandelMap" type="com.asiainfo.biapp.pec.plan.jx.hmh5.vo.McdFrontUsageOppoHandleInfo">
+
+        <result column="DATA_DATE" property="dataDate" ></result>
+        <result column="CAMPSEG_NAME" property="campsegName" ></result>
+        <result column="CAMPSEG_ID" property="campsegId" ></result>
+        <result column="CAMP_CITY_ID" property="campCityId" ></result>
+        <result column="CAMP_CITY_NAME" property="campCityName" ></result>
+        <result column="CITY_ID" property="cityId" ></result>
+        <result column="CITY_NAME" property="cityName" ></result>
+        <result column="TASK_COUNT" property="taskCount" ></result>
+        <result column="CAMP_CALL_M" property="campCallM" ></result>
+        <result column="CAMP_DEAL_M" property="campDealM" ></result>
+        <result column="CAMP_HANDLE_M" property="campHandleM" ></result>
+        <result column="CAMP_CALL_T" property="campCallT" ></result>
+        <result column="CAMP_DEAL_T" property="campDealT" ></result>
+        <result column="CAMP_HANDLE_T" property="campHandleT" ></result>
+
+    </resultMap>
+
+    <select id="queryOppoCampCityHandle"  resultMap="frontUsageOppoHandelMap">
+
+
+      SELECT  TO_DATE(#{req.dataDate}, 'yyyy/mm/dd')  DATA_DATE,
+             A.CAMPSEG_NAME,
+             A.CAMPSEG_ID,
+             A.CAMP_CITY_NAME,
+             A.CAMP_CITY_ID,
+             A.CITY_ID,
+             A.CITY_NAME,
+             NVL(A.TASK_COUNT, 0)     TASK_COUNT,
+             NVL(A.CAMP_CALL_M, 0)    CAMP_CALL_M,
+             NVL(A.CAMP_DEAL_M, 0)    CAMP_DEAL_M,
+             NVL(A.CAMP_HANDLE_M, 0)  CAMP_HANDLE_M,
+             NVL(A.CAMP_CALL_T, 0)    CAMP_CALL_T,
+             NVL(A.CAMP_DEAL_T, 0)    CAMP_DEAL_T,
+             NVL(A.CAMP_HANDLE_T, 0)  CAMP_HANDLE_T
+      FROM (SELECT B.CAMPSEG_NAME,
+                   B.CAMPSEG_ID,
+                   B.CAMP_CITY_ID,
+                   B.CAMP_CITY_NAME,
+                   B.CITY_NAME,
+                   B.CITY_ID,
+                   B.TASK_COUNT,
+                   B.CAMP_CALL_M,
+                   B.CAMP_DEAL_M,
+                   B.CAMP_HANDLE_M,
+                   B.CAMP_CALL_T,
+                   B.CAMP_DEAL_T,
+                   B.CAMP_HANDLE_T
+            FROM  REPORT_OPPOR_CAMP_CITY_MONTH B
+            WHERE B.DATA_DATE = TO_DATE(#{req.dataDate}, 'yyyy/mm/dd')
+            UNION SELECT C.CAMPSEG_NAME,
+                         C.CAMPSEG_ID,
+                         C.CAMP_CITY_ID,
+                         C.CAMP_CITY_NAME,
+                         '省公司'                CITY_NAME,
+                         '999'                CITY_ID,
+                         SUM(C.TASK_COUNT)    TASK_COUNT,
+                         SUM(C.CAMP_CALL_M)   CAMP_CALL_M,
+                         SUM(C.CAMP_DEAL_M)   CAMP_DEAL_M,
+                         SUM(C.CAMP_HANDLE_M) CAMP_HANDLE_M,
+                         SUM(C.CAMP_CALL_T)   CAMP_CALL_T,
+                         SUM(C.CAMP_DEAL_T)   CAMP_DEAL_T,
+                         SUM(C.CAMP_HANDLE_T) CAMP_HANDLE_T
+                  FROM  REPORT_OPPOR_CAMP_CITY_MONTH C
+                  WHERE C.DATA_DATE = TO_DATE(#{req.dataDate}, 'yyyy/mm/dd')
+                  GROUP BY C.CAMP_CITY_ID, C.CAMP_CITY_NAME, C.CAMPSEG_NAME, C.CAMPSEG_ID) A
+      WHERE 1 = 1
+
+        <if test="req.cityIdOrName != null and  req.cityIdOrName !=''">
+
+            and ( A.CITY_NAME like '%'||#{req.cityIdOrName}||'%' or  A.CITY_ID like '%'||#{req.cityIdOrName}||'%')
+        </if>
+
+        <if test="req.campsegIdOrName != null and  req.campsegIdOrName !=''">
+
+            and ( A.CAMPSEG_ID like '%'||#{req.campsegIdOrName}||'%' or  A.CAMPSEG_NAME like '%'||#{req.campsegIdOrName}||'%')
+        </if>
+
+
+    </select>
+
+</mapper>

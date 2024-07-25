@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.asiainfo.biapp.pec.plan.jx.link.dao.IMpmCampSegInfoDao">
+
+    <select id="getCampSegInfo" resultType="com.asiainfo.biapp.pec.plan.jx.link.vo.McdCampDef">
+        select * from mcd_camp_def seginfo where seginfo.campseg_id = #{campSegId,jdbcType=VARCHAR}
+    </select>
+
+    <select id="getDimCampsegStat" resultType="com.asiainfo.biapp.pec.plan.jx.link.vo.McdDimCampStatus">
+        select * from mcd_dim_camp_status where campseg_stat_ID = #{dimCampsegStatID,jdbcType=VARCHAR}
+    </select>
+</mapper>

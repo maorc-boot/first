@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.asiainfo.biapp.pec.plan.jx.hmh5.dao.IMcdCallDetailsMapper">
+    <!--  外呼明细查询  -->
+    <select id="queryCallDetailsList" resultType="com.asiainfo.biapp.pec.plan.jx.hmh5.vo.McdOutDetailsVo">
+        select log.BUSINESS_SCENARIO_CODE                                          scenarioId,
+               log.BUSINESS_SCENARIO_NAME                                          scenarioName,
+               dcity.CITY_NAME                                                     city,
+               dcounty.COUNTY_NAME                                                 county,
+               mager.CHANNEL_ID                                                    channelId,
+               channel.CHANNEL_NAME                                                channelName,
+               log.MANAGER_ID                                                      managerid,
+               mager.STAFF_NAME                                                    managerName,
+               call.CALLIDENTIFIER                                                 onlyId,
+               call.CALLER                                                         caller,
+               call.CALLEE                                                         callee,
+               case when call.DISPLAY != null and length(call.DISPLAY) &lt; 11 then '否' else '是' end display,
+               (select USER_ID from MCD_FRONT_LINE_ALL_USER  where PRODUCT_NO=call.CALLEE ) as     userId,
+               (to_char(call.START_TIME, 'yyyy-mm-dd'))                            startTime,
+               (to_char(call.END_TIME, 'yyyy-mm-dd'))                              endTime,
+               log.WGRID_ID                                                        gridId,
+               log.WGRID_NAME                                                      gridName,
+               log.MODULE_TYPE                                                     moduleType,
+               call.TALK_DURATION                                                  duration,
+               (CASE WHEN call.CALL_RESULT = '1' THEN '成功' ELSE '失败' END)          result,
+               (CASE WHEN log.IVR_RESULT = '2' THEN '通过' ELSE '未通过' END)           verification,
+               call.AUDIO_URL                                                      url,
+               (CASE
+                    WHEN call.END_TYPE = 'HangUp' THEN '正常挂机'
+                    WHEN call.END_TYPE = 'CallerBusy' THEN ' 主叫忙'
+                    WHEN call.END_TYPE = 'CallerNoAnswer' THEN ' 主叫无应答' WHEN call.END_TYPE = 'CallerFailure' THEN ' 主叫其它原因失败'
+                    WHEN call.END_TYPE = 'CallerAbandon' THEN ' 呼叫被叫过程中主叫挂机' WHEN call.END_TYPE = 'CalleeBusy' THEN ' 被叫忙'
+                    WHEN call.END_TYPE = 'CalleeNoAnswer' THEN ' 被叫无应答' WHEN call.END_TYPE = 'CalleeFailure' THEN ' 被叫其它原因失败'
+                    ELSE '其它原因失败' END) endType
+        from MCD_CALL_OUT_RECORDING_DETAIL call
+                 left join MCD_CALL_OUT_LOG log on log.CALLIDENTIFIER = call.CALLIDENTIFIER
+                 left join MCD_FRONT_LINE_MANAGER mager on log.MANAGER_ID = mager.STAFF_ID
+                 left join DIM_PUB_COUNTY dcounty on mager.COUNTY_ID = dcounty.COUNTY_ID
+                 left join DIM_PUB_CITY dcity on mager.CITY_ID = dcity.CITY_ID
+                 left join MCD_FRONT_LINE_CHANNEL channel on mager.CHANNEL_ID = channel.CHANNEL_ID
+        <where>
+            <if test = "query.city != null and query.city !=''">
+                and dcity.CITY_ID = #{query.city}
+            </if>
+
+            <if test = "query.county != null and query.county !='' and query.county !='9999' ">
+                and dcounty.COUNTY_ID = #{query.county}
+            </if>
+
+            <if test = "query.channel != null and query.channel !=''">
+                and mager.CHANNEL_ID = #{query.channel}
+            </if>
+
+            <if test = "query.managerId != null and query.managerId !=''">
+                and log.MANAGER_ID = #{query.managerId}
+            </if>
+
+            <if test = "query.onlyId != null and query.onlyId !=''">
+                and call.CALLIDENTIFIER = #{query.onlyId}
+            </if>
+
+            <if test = "query.btp != null and query.btp !=''">
+                and log.MODULE_TYPE = #{query.btp}
+            </if>
+
+            <if test = "query.callerPhone != null and query.callerPhone !=''">
+                and call.CALLER = #{query.callerPhone}
+            </if>
+
+            <if test = "query.calledPhone != null and query.calledPhone !=''">
+                and call.CALLEE = #{query.calledPhone}
+            </if>
+
+            <if test = "query.result != null and query.result !=''">
+                and call.CALL_RESULT = #{query.result}
+            </if>
+
+            <if test = "query.grid != null and query.grid !='' and query.grid !='9999'">
+                and  log.WGRID_NAME  LIKE '%'||#{query.grid}||'%'
+            </if>
+
+            <if test="query.startTime != null and query.startTime !='' ">
+                <![CDATA[ and call.END_TIME >= to_date(#{query.startTime},'yyyy:mm:dd hh24:mi:ss') ]]>
+            </if>
+
+            <if test="query.endTime != null and query.endTime !='' ">
+                <![CDATA[ and call.END_TIME <= to_date( #{query.endTime},'yyyy:mm:dd hh24:mi:ss')  ]]>
+            </if>
+        </where>
+        order by call.END_TIME desc
+    </select>
+
+    <!--  获取明细查询请求url  -->
+    <select id="getUrl" resultType="java.lang.String">
+        select DIC_DATA_VALUE call_url from MCD_SYS_DIC where DIC_KEY='call_url'
+    </select>
+
+</mapper>

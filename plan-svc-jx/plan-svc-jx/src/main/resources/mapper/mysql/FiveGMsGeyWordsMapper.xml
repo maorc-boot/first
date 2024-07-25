@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.asiainfo.biapp.pec.plan.jx.fivegmsgchannel.dao.IFiveGMsgKeywordsDao">
+
+    <select id="queryFiveGKeywordsCount" parameterType="string" resultType="int">
+         select count(1) from MCD_CHANNEL_FIVEG_KEYWORDS cfk  where 1=1
+         <if test="#{keyWords} !='' and #{keyWords} !=null and #{flag}=true">
+             and cfk.KEYWORDS_NAME  like  '%'|| #{keyWords} ||'%'
+         </if>
+
+        <if test="#{applicationNum} !='' and #{applicationNum} !=null and #{flag}=true">
+            and cfk.APPLICATION_NUM  like  '%'|| #{applicationNum} ||'%'
+        </if>
+
+        <if test="#{keyWords} !='' and #{keyWords} !=null and #{flag}=false">
+            and cfk.KEYWORDS_NAME  =  #{keyWords}
+        </if>
+
+        <if test="#{applicationNum} !='' and #{applicationNum} !=null and #{flag}=false">
+            and cfk.APPLICATION_NUM  =  #{applicationNum}
+        </if>
+        order by CREATE_TIME desc
+    </select>
+
+    <select id="queryFiveGKeywordsInfo" parameterType="string" resultType="com.asiainfo.biapp.pec.plan.jx.fivegmsgchannel.vo.FiveGMsgKeywordsVo">
+        select cfk.APPLICATION_NUM applicationNum, cfk.KEYWORDS_ID keywordsId,cfk.KEYWORDS_NAME keywordsName,cfk.TEMPLATE_ID templateId,
+        cfk.TEMPLATE_NAME templateName,cfk.CREATE_USER createUser,cfk.CREATE_TIME createTime from MCD_CHANNEL_FIVEG_KEYWORDS cfk WHERE 1 = 1
+        <if test="#{keyWords} !='' and #{keyWords} !=null and #{flag}=true">
+            and cfk.KEYWORDS_NAME  like  '%'|| #{keyWords} ||'%'
+        </if>
+
+        <if test="#{applicationNum} !='' and #{applicationNum} !=null and #{flag}=true">
+            and cfk.APPLICATION_NUM  like  '%'|| #{applicationNum} ||'%'
+        </if>
+
+        <if test="#{keyWords} !='' and #{keyWords} !=null and #{flag}=false">
+            and cfk.KEYWORDS_NAME  =  #{keyWords}
+        </if>
+
+        <if test="#{applicationNum} !='' and #{applicationNum} !=null and #{flag}=false">
+            and cfk.APPLICATION_NUM  =  #{applicationNum}
+        </if>
+        order by CREATE_TIME desc
+         limit ${pageNum},${pageSize}
+    </select>
+
+    <update id="deleteFiveGKeywordsInfo" parameterType="string">
+        delete from MCD_CHANNEL_FIVEG_KEYWORDS where KEYWORDS_ID = #{keywords}
+    </update>
+
+    <insert id="addFiveGKeywordsInfo" parameterType="com.asiainfo.biapp.pec.plan.jx.fivegmsgchannel.vo.FiveGMsgKeywordsVo" >
+        insert into MCD_CHANNEL_FIVEG_KEYWORDS(KEYWORDS_ID,APPLICATION_NUM,KEYWORDS_NAME,TEMPLATE_ID,
+        TEMPLATE_NAME,TEMPLATE_TYPE,CREATE_USER, CREATE_TIME, FALLBACK_TYPE)
+         values(#{fiveGMsg.keywordsId},#{fiveGMsg.applicationNum},#{fiveGMsg.keywordsName},#{fiveGMsg.templateId},
+         #{fiveGMsg.templateName},#{fiveGMsg.templateType},#{fiveGMsg.createUser},#{fiveGMsg.createTime},#{fiveGMsg.fallBackType})
+    </insert>
+
+    <update id="updateFiveGKeywordsInfo" parameterType="com.asiainfo.biapp.pec.plan.jx.fivegmsgchannel.vo.FiveGMsgKeywordsVo">
+        update MCD_CHANNEL_FIVEG_KEYWORDS set TEMPLATE_ID = #{fiveGMsg.templateId},TEMPLATE_NAME = #{fiveGMsg.templateName},TEMPLATE_TYPE = #{fiveGMsg.templateType}
+        ,CREATE_USER = #{fiveGMsg.createUser}
+         where KEYWORDS_ID = #{fiveGMsg.keywordsId}
+    </update>
+
+</mapper>

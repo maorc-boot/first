@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.asiainfo.biapp.pec.plan.jx.hmh5.dao.McdFrontGuardListDao">
+
+    <!-- 导出查询映射结果 -->
+    <resultMap id="queryResultMap" type="com.asiainfo.biapp.pec.plan.jx.hmh5.vo.McdFrontGuardUserInfo">
+        <result column="PRODUCT_NO" property="productNo" />
+        <result column="MANAGER_ID" property="managerId" />
+        <result column="GUARD_TYPE" property="guardType" />
+        <result column="CITY_NAME" property="cityName" />
+        <result column="CHANNEL" property="channelId" />
+        <result column="CHANNEL_NAME" property="channelName" />
+        <result column="isKeyCustomer" property="vipCustomerFlag" />
+        <result column="COUNTY_NAME" property="countyName" />
+
+    </resultMap>
+
+    <select id="queryGuardUserList" resultMap="queryResultMap"
+            parameterType="com.asiainfo.biapp.pec.plan.jx.hmh5.request.McdFrontGuardUserQuery">
+        SELECT mfl.PRODUCT_NO,
+        mfl.MANAGER_ID,
+        CASE  WHEN mfl.MANAGER_ID IS NULL  THEN '渠道共享看护' WHEN  mfl.MANAGER_ID = '0' THEN '渠道共享看护' ELSE  '工号看护' END GUARD_TYPE,
+        mfl.CHANNEL ,
+        channel.CHANNEL_NAME,
+        mdc.CITY_NAME,
+        mcd.COUNTY_NAME,
+        CASE mfl.IS_KEY_CUSTOMER
+        WHEN 1 THEN '是'
+        WHEN 2 THEN '否'
+        ELSE '其他' END     isKeyCustomer
+        FROM MCD_FRONT_LINE_ALL_USER mfl
+        LEFT JOIN MCD_DIM_CITY mdc ON mfl.USER_CITY_ID = mdc.CITY_ID
+        LEFT JOIN dim_pub_county mcd ON mfl.USER_COUNTY_ID = mcd.COUNTY_ID
+        LEFT JOIN MCD_FRONT_LINE_CHANNEL channel ON mfl.CHANNEL = channel.CHANNEL_ID
+        WHERE 1 = 1
+
+
+        <if test="req.vipCustomerFlag != null and req.vipCustomerFlag != ''">
+            and mfl.IS_KEY_CUSTOMER  = #{req.vipCustomerFlag,jdbcType=VARCHAR}
+        </if>
+
+        <if test="req.cityCode != null and req.cityCode != ''">
+            and mfl.USER_CITY_ID = #{req.cityCode,jdbcType=VARCHAR}
+        </if>
+        <if test="req.countyCode != null and req.countyCode != ''">
+            and mfl.USER_COUNTY_ID = #{req.countyCode,jdbcType=VARCHAR}
+        </if>
+
+        <if test="req.channelId != null and req.channelId != ''">
+            and mfl.CHANNEL = #{req.channelId,jdbcType=VARCHAR}
+        </if>
+        <if test="req.productNo != null and req.productNo != ''">
+            and mfl.PRODUCT_NO  = #{req.productNo,jdbcType=VARCHAR}
+        </if>
+
+        <if test="req.managerId != null and req.managerId != ''">
+            and mfl.MANAGER_ID =   #{req.managerId,jdbcType=VARCHAR}
+        </if>
+
+
+        <if test="req.guardType != null and req.guardType != '' and req.guardType == '0'.toString()">
+            and NVL(mfl.MANAGER_ID,0) = 0
+        </if>
+
+        <if test="req.guardType != null and req.guardType != '' and req.guardType == '1'.toString()">
+            and NVL(mfl.MANAGER_ID,0) != 0
+        </if>
+
+        ORDER BY mfl.SO_IVR_DATE DESC
+    </select>
+
+
+    <select id="getGuardUserCount" resultType="int" parameterType="com.asiainfo.biapp.pec.plan.jx.hmh5.request.McdFrontGuardUserQuery">
+
+        SELECT COUNT(1)
+        FROM MCD_FRONT_LINE_ALL_USER mfl
+        LEFT JOIN MCD_DIM_CITY mdc ON mfl.USER_CITY_ID = mdc.CITY_ID
+        LEFT JOIN dim_pub_county mcd ON mfl.USER_COUNTY_ID = mcd.COUNTY_ID
+        LEFT JOIN MCD_FRONT_LINE_CHANNEL channel ON mfl.CHANNEL = channel.CHANNEL_ID
+        WHERE 1 = 1
+
+
+        <if test="req.vipCustomerFlag != null and req.vipCustomerFlag != ''">
+            and mfl.IS_KEY_CUSTOMER  = #{req.vipCustomerFlag,jdbcType=VARCHAR}
+        </if>
+
+        <if test="req.cityCode != null and req.cityCode != ''">
+            and mfl.USER_CITY_ID = #{req.cityCode,jdbcType=VARCHAR}
+        </if>
+        <if test="req.countyCode != null and req.countyCode != ''">
+            and mfl.USER_COUNTY_ID = #{req.countyCode,jdbcType=VARCHAR}
+        </if>
+
+        <if test="req.channelId != null and req.channelId != ''">
+            and mfl.CHANNEL = #{req.channelId,jdbcType=VARCHAR}
+        </if>
+        <if test="req.productNo != null and req.productNo != ''">
+            and mfl.PRODUCT_NO  = #{req.productNo,jdbcType=VARCHAR}
+        </if>
+
+        <if test="req.managerId != null and req.managerId != ''">
+            and mfl.MANAGER_ID =   #{req.managerId,jdbcType=VARCHAR}
+        </if>
+
+
+        <if test="req.guardType != null and req.guardType != '' and req.guardType == '0'.toString()">
+            and NVL(mfl.MANAGER_ID,0) = 0
+        </if>
+
+        <if test="req.guardType != null and req.guardType != '' and req.guardType == '1'.toString()">
+            and NVL(mfl.MANAGER_ID,0) != 0
+        </if>
+
+    </select>
+
+
+</mapper>

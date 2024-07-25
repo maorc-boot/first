@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.asiainfo.biapp.pec.plan.jx.enterprise.mapper.EnterPriseMapper">
+
+    <select id="queryEnterprisePlan"  resultType="com.asiainfo.biapp.pec.plan.jx.enterprise.vo.OfferVo">
+        select A.PRODUCT_ID OfferCode,A.PRODUCT_NAME offerName,A.PRODUCT_SRV_TYPE offerType
+        FROM group_product_def A
+            LEFT JOIN MCD_SYS_ENUM ENUM ON A.PRODUCT_SRV_TYPE = ENUM.ENUM_KEY
+            AND ENUM.ENUM_TYPE = 'plan_srv_type'
+        WHERE 1 = 1
+            AND CURRENT_TIMESTAMP BETWEEN ifnull(A.PRODUCT_START_DATE, date_format('19000101', '%Y-%m-%d'))
+            AND ifnull(A.PRODUCT_END_DATE, date_format('21000101', '%Y-%m-%d'))
+            AND A.STATUS = 1
+            AND A.PRODUCT_SRV_TYPE != 4
+            <if test="offerCode != null and offerCode !='' ">
+                and (A.PRODUCT_ID like concat('%',#{offerCode},'%') )
+            </if>
+            <if test="offerName != null and offerName !='' ">
+            and (A.PRODUCT_NAME like concat('%',#{offerName},'%') )
+            </if>
+        ORDER BY A.PRODUCT_START_DATE DESC, A.PRODUCT_ID DESC
+    </select>
+
+    <select id="queryApprove" resultType="com.asiainfo.biapp.pec.plan.jx.enterprise.vo.ApproveUserVo">
+        select users.USER_ID userId, users.USER_NAME userName
+        from mcd_sys_user users
+                 left join mcd_sys_user_role_relation relation on users.USER_ID = relation.USER_ID
+        where 1 = 1
+          and relation.ROLE_ID = #{roleId}
+    </select>
+
+    <select id="queryCityList" resultType="com.asiainfo.biapp.pec.plan.jx.enterprise.vo.OrgVo">
+        select CITY_ID as ORG_ID ,CITY_NAME AS ORG_NAME from MCD_DIM_CITY ORDER BY  CITY_ID
+    </select>
+
+    <select id="getCampDetails" resultType="map">
+        select distinct b.CAMPSEG_ID,
+                        a.CAMPSEG_NAME,
+                        a.ACTIVITY_TYPE,
+                        a.ACTIVITY_OBJECTIVE,
+                        b.CHANNEL_ID,
+                        b.CHANNEL_ADIV_ID,
+                        e.ADIV_NAME,
+                        b.EXEC_CONTENT,
+                        b.PUSH_TYPE,
+                        a.CAMPSEG_TYPE_ID,
+                        b.CEP_EVENT_ID,
+                        b.CEP_SCENE_NAME,
+                        a.MARKETING_TYPE,
+                        c.COLUMN_EXT1,
+                        c.COLUMN_EXT2,
+                        c.COLUMN_EXT3,
+                        c.COLUMN_EXT4,
+                        c.COLUMN_EXT5,
+                        c.COLUMN_EXT6,
+                        c.COLUMN_EXT7,
+                        c.COLUMN_EXT8,
+                        c.COLUMN_EXT9,
+                        c.COLUMN_EXT10,
+                        c.COLUMN_EXT11,
+                        c.COLUMN_EXT12,
+                        c.COLUMN_EXT13,
+                        c.COLUMN_EXT14,
+                        c.COLUMN_EXT15,
+                        c.COLUMN_EXT16,
+                        c.COLUMN_EXT17,
+                        c.COLUMN_EXT18,
+                        c.COLUMN_EXT19,
+                        c.COLUMN_EXT20
+        from mcd_camp_def a,
+             mcd_camp_channel_list b,
+             mcd_camp_channel_ext c,
+             mcd_dim_adiv_info e
+        where a.campseg_id = b.CAMPSEG_PID
+          and b.CAMPSEG_ID = c.CAMPSEG_ID
+          and b.CHANNEL_ID = e.CHANNEL_ID
+          and b.CHANNEL_ADIV_ID = e.ADIV_ID
+          and b.CHANNEL_ID = e.CHANNEL_ID
+          and b.campseg_id = #{campsegId}
+    </select>
+
+    <select id="queryCampSegInfo" resultType="com.asiainfo.biapp.pec.plan.jx.enterprise.model.McdCampDef">
+        select dd.*
+        from mcd_camp_def dd
+                 left join mcd_camp_channel_list cc on cc.CAMPSEG_PID = dd.CAMPSEG_ID
+        where cc.CAMPSEG_ID = #{campSId};
+    </select>
+    <select id="queryTargetIdBySubitemId" resultType="java.lang.Long">
+        select B.TARGET_ID as targetId
+        from GROUP_MARKETING_SCHEME_INFO A
+                 left join GROUP_MARKETING_RULE_INFO B on A.MARKET_RULE_ID = B.ID
+        where A.SUBITEM_ID = #{subitemId} limit 1
+    </select>
+
+</mapper>
