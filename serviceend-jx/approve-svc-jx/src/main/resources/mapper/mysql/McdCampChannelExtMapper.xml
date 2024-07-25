@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.asiainfo.biapp.pec.approve.jx.dao.McdCampChannelExtDao">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.asiainfo.biapp.pec.approve.jx.model.McdCampChannelExt">
+        <id column="CAMPSEG_ID" property="campsegId" />
+        <result column="COLUMN_EXT1" property="columnExt1" />
+        <result column="COLUMN_EXT2" property="columnExt2" />
+        <result column="COLUMN_EXT3" property="columnExt3" />
+        <result column="COLUMN_EXT4" property="columnExt4" />
+        <result column="COLUMN_EXT5" property="columnExt5" />
+        <result column="COLUMN_EXT6" property="columnExt6" />
+        <result column="COLUMN_EXT7" property="columnExt7" />
+        <result column="COLUMN_EXT8" property="columnExt8" />
+        <result column="COLUMN_EXT9" property="columnExt9" />
+        <result column="COLUMN_EXT10" property="columnExt10" />
+        <result column="COLUMN_EXT11" property="columnExt11" />
+        <result column="COLUMN_EXT12" property="columnExt12" />
+        <result column="COLUMN_EXT13" property="columnExt13" />
+        <result column="COLUMN_EXT14" property="columnExt14" />
+        <result column="COLUMN_EXT15" property="columnExt15" />
+        <result column="COLUMN_EXT16" property="columnExt16" />
+        <result column="COLUMN_EXT17" property="columnExt17" />
+        <result column="COLUMN_EXT18" property="columnExt18" />
+        <result column="COLUMN_EXT19" property="columnExt19" />
+        <result column="COLUMN_EXT20" property="columnExt20" />
+    </resultMap>
+    <delete id="deleteByCampsegPid">
+        delete from mcd_camp_channel_ext where campseg_id in (
+            select campseg_id from mcd_camp_channel_list where campseg_pid = #{campsegPid,jdbcType=VARCHAR}
+        )
+    </delete>
+    <select id="qryByCampsegPid" resultMap="BaseResultMap">
+        select * from mcd_camp_channel_ext ext inner join mcd_camp_channel_list list on ext.CAMPSEG_ID = list.CAMPSEG_ID
+        where list.CAMPSEG_PID = #{campsegPid,jdbcType=VARCHAR}
+    </select>
+    <delete id="deleteByCampsegRootId">
+        delete from mcd_camp_channel_ext where campseg_id in (
+            select campseg_id from mcd_camp_channel_list where campseg_root_id = #{campsegRootId,jdbcType=VARCHAR}
+        )
+    </delete>
+    <select id="qryByCampsegRootId" resultMap="BaseResultMap">
+        select * from mcd_camp_channel_ext ext inner join mcd_camp_channel_list list on ext.CAMPSEG_ID = list.CAMPSEG_ID
+        where list.campseg_root_id = #{campsegRootId,jdbcType=VARCHAR}
+    </select>
+
+    <select id="validMaterial" resultMap="BaseResultMap" parameterType="java.lang.String">
+        select ext.* from mcd_camp_channel_ext ext
+        inner join mcd_camp_channel_list list
+        on ext.CAMPSEG_ID = list.CAMPSEG_ID
+        <where>
+            <if test="campsegId != null and campsegId != ''">
+                and ext.CAMPSEG_ID = #{campsegId,jdbcType=VARCHAR}
+            </if>
+            <if test="channelId != null and channelId != ''">
+                and list.channel_id = #{channelId,jdbcType=VARCHAR}
+            </if>
+            <if test="adivId != null and adivId != ''">
+                and ext.column_Ext6 = #{adivId,jdbcType=VARCHAR}
+            </if>
+            <if test="adivUrl != null and adivUrl != ''">
+                and ext.column_Ext8 = #{adivUrl,jdbcType=VARCHAR}
+            </if>
+        </where>
+    </select>
+
+
+</mapper>

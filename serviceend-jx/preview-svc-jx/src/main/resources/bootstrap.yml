@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: preview-svc
+  cloud:
+    nacos:
+      config:
+        namespace: mcd7-dev-jx
+        server-addr: 10.19.92.24:8848
+        file-extension: yml
+        group: mcd7-dev
+        username: mcd
+        password: mcd7
+        shared-configs:
+          - data-id: common-config.yml
+            group: mcd7-dev
+            refresh: true
+      discovery:
+        namespace: mcd7-dev-jx
+        group: mcd7-dev
+        server-addr: 10.19.92.24:8848
+        username: mcd
+        password: mcd7

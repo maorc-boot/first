@@ -1,0 +1,341 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.asiainfo.biapp.pec.eval.jx.dao.IEnterpriseMarketingDao">
+
+    <select id="getDimManager" resultType="map"
+            parameterType="com.asiainfo.biapp.pec.eval.jx.model.EnterpriseMarkeringEffect">
+        select distinct MANAGER_ID managerId, MANAGER_NAME managerName
+        from ENTERPRISE_MARKERING_EFFECT
+        WHERE 1 = 1
+          and COUNTY_ID = #{countyId}
+          and CITY_ID = #{cityId}
+        ORDER BY MANAGER_NAME
+    </select>
+
+    <select id="getDimGrid" resultType="map"
+            parameterType="com.asiainfo.biapp.pec.eval.jx.model.EnterpriseMarkeringEffect">
+        select distinct GRID_ID gridId,GRID_NAME gridName
+        from ENTERPRISE_MARKERING_EFFECT WHERE 1=1
+        <if test="cityId != null and cityId !='' ">
+            and CITY_ID = #{cityId}
+        </if>
+        <if test="countyId != null and countyId !='' ">
+            and COUNTY_ID = #{countyId}
+        </if>
+        <if test="managerId != null and managerId !='' ">
+            and MANAGER_ID = #{managerId}
+        </if>
+        ORDER BY GRID_ID
+    </select>
+
+    <select id="getDimGroups" resultType="map"
+            parameterType="com.asiainfo.biapp.pec.eval.jx.model.EnterpriseMarkeringEffect">
+        select distinct b.GROUP_CODE groupsId, b.GROUP_NAME groupsName
+        from ENTERPRISE_MARKERING_EFFECT a left join GROUP_MARKETING_TASK b on a.TASK_ID = b.ID WHERE 1=1
+        <if test="cityId != null and cityId !='' ">
+            and a.CITY_ID = #{cityId}
+        </if>
+        <if test="countyId != null and countyId !='' ">
+            and a.COUNTY_ID = #{countyId}
+        </if>
+        <if test="managerId != null and managerId !='' ">
+            and a.MANAGER_ID = #{managerId}
+        </if>
+        <if test="gridId != null and gridId !='' ">
+            and a.GRID_ID = #{gridId}
+        </if>
+        ORDER BY b.GROUP_CODE
+    </select>
+    <select id="queryMarketingNumList" resultType="com.asiainfo.biapp.pec.eval.jx.vo.Marketing" parameterType="com.asiainfo.biapp.pec.eval.jx.req.EnterpriseEvalReq">
+        select A.task_id taskId,A.task_name taskName,A.camp_id campId,A.camp_name CampName,A.plan_id planId,
+               A.plan_name planName, SUM(A.intime_camp_count) intimeCampCount,
+               SUM(A.camp_count) campCount,SUM(A.target_user_num) targetUserNum,SUM(A.warm_up_user_num) warmUpUserNum,
+               SUM(A.offline_camp_count) offlineCampCount,SUM(A.issue_user_num) issueUserNum,
+               SUM(A.countact_user_num) countactUserNum,SUM(A.sucess_user_num) sucessUserNum,
+               CASE  WHEN SUM(A.sucess_user_num) = 0 THEN '0%' ELSE CONCAT(FORMAT (SUM(A.sucess_user_num) * 100.0 / SUM(A.issue_user_num), 2) , '%') END contactRate,
+               CASE WHEN SUM(A.sucess_user_num) = 0 THEN '0%' ELSE CONCAT(FORMAT (SUM(A.sucess_user_num) * 100.0 / SUM(A.TARGET_USER_NUM), 2) , '%') END   conversionRate,
+               CASE  WHEN SUM(A.ISSUE_USER_NUM) = 0 THEN '0%'  ELSE CONCAT(FORMAT (SUM(A.ISSUE_USER_NUM) * 100.0 / SUM(A.INTIME_CAMP_COUNT), 2) , '%') END timelinessRatio,
+               B.START_TIME startTime,B.END_TIME endTime, A.city_id cityId,A.city_name cityName,B.GROUP_TYPE groupsType
+                <if test="req.cityId != '-1'.toString()">
+                    ,A.COUNTY_NAME countyName,A.COUNTY_Id countyId
+                </if>
+                <if test="req.countyId != '0'.toString() and req.cityId !='0'.toString() ">
+                    ,A.COUNTY_NAME countyName,A.COUNTY_Id countyId
+                </if>
+                <if test="req.managerId != '0'.toString() and req.cityId !='0'.toString() and req.countyId != '0'.toString()">
+                    ,A.MANAGER_ID managerId,A.manager_name managerName
+                </if>
+                <if test="req.gridId != '0'.toString() and req.cityId !='0'.toString() and req.countyId != '0'.toString() and req.managerId != '0'.toString()">
+                    ,A.grid_id gridId ,A.grid_name gridName
+                </if>
+                <if test="req.groupsId != '0'.toString() and req.cityId !='0'.toString() and req.countyId != '0'.toString() and req.managerId != '0'.toString() and req.gridId != '0'.toString()">
+                    ,B.GROUP_CODE groupsId ,B.GROUP_NAME groupsName
+                </if>
+        from ENTERPRISE_MARKERING_EFFECT A
+        left join GROUP_MARKETING_TASK B on A.TASK_ID=B.ID WHERE 1=1
+        <if test="req.cityId != null and req.cityId != '' and req.cityId != '0'.toString() and req.cityId !='-1'.toString() ">
+            and A.city_id = #{req.cityId}
+        </if>
+        <if test="req.countyId != null and req.countyId != '' and req.countyId != '0'.toString() and req.countyId !='-1'.toString() ">
+            and A.COUNTY_ID = #{req.countyId}
+        </if>
+        <if test="req.managerId != null and req.managerId != '' and req.managerId != '0'.toString() and req.managerId !='-1'.toString() ">
+            and A.MANAGER_ID = #{req.managerId}
+        </if>
+        <if test="req.gridId != null and req.gridId != '' and req.gridId != '0'.toString() and req.gridId !='-1'.toString() ">
+            and A.grid_id = #{req.gridId}
+        </if>
+        <if test="req.groupsId != null and req.groupsId != '' and req.groupsId != '0'.toString() and req.groupsId !='-1'.toString() ">
+            and B.GROUP_CODE = #{req.groupsId}
+        </if>
+        <if test="req.taskName != null and req.taskName != '' ">
+            and (A.TASK_ID like CONCAT('%',#{req.taskName},'%') or A.task_name like CONCAT('%',#{req.taskName},'%'))
+        </if>
+        <if test="req.inputGroupName != null and req.inputGroupName != '' ">
+            and (A.GROUP_NAME like CONCAT('%',#{req.inputGroupName},'%'))
+        </if>
+        <if test="req.inputManager != null and req.inputManager != '' ">
+            and (A.MANAGER_ID like CONCAT('%',#{req.inputManager},'%') or A.MANAGER_NAME like CONCAT('%',#{req.inputManager},'%'))
+        </if>
+        <if test="req.startDay != null and req.startDay != '' ">
+            and DATE_FORMAT(b.START_TIME,'%Y-%m-%d') >=str_to_date(#{req.startDay,jdbcType=VARCHAR}, '%Y-%m-%d')
+        </if>
+        <if test="req.endDay != null and req.endDay != '' ">
+            and DATE_FORMAT(b.END_TIME,'%Y-%m-%d') >=str_to_date(#{req.endDay,jdbcType=VARCHAR}, '%Y-%m-%d')
+        </if>
+        <if test="req.inputCamp != null and req.inputCamp != '' ">
+            and (A.camp_id like CONCAT('%',#{req.inputCamp},'%') or A.camp_name like CONCAT('%',#{req.inputCamp},'%'))
+        </if>
+        <if test="req.selectGroupsType != null and req.selectGroupsType != '' ">
+            and B.GROUP_TYPE = #{req.selectGroupsType}
+        </if>
+        GROUP BY A.task_id, A.task_name, A.camp_id, A.camp_name, A.plan_id, A.plan_name
+        ,B.START_TIME,B.END_TIME ,A.city_id, A.city_name,B.GROUP_CODE
+        <if test="req.cityId != '-1'">
+            ,A.COUNTY_NAME,A.COUNTY_Id
+        </if>
+        <if test="req.countyId != '0' and req.cityId !='0' ">
+            ,A.COUNTY_NAME,A.COUNTY_Id
+        </if>
+        <if test="req.managerId != '0' and req.cityId !='0' and req.countyId != '0'">
+            ,A.manager_name,A.MANAGER_ID
+        </if>
+        <if test="req.gridId != '0' and req.cityId !='0' and req.countyId != '0' and req.managerId != '0'">
+            ,A.grid_id,A.grid_name
+        </if>
+        <if test="req.groupsId != '0' and req.cityId !='0' and req.countyId != '0' and req.managerId != '0' and req.gridId != '0'">
+            ,B.GROUP_CODE,B.GROUP_NAME
+        </if>
+
+    </select>
+
+    <select id="queryMarketingList" resultType="com.asiainfo.biapp.pec.eval.jx.vo.Marketing" parameterType="com.asiainfo.biapp.pec.eval.jx.req.EnterpriseEvalReq">
+        select A.task_id taskId,A.task_name taskName,A.camp_id campId,A.camp_name CampName,A.plan_id planId,
+               A.plan_name planName, A.intime_camp_count intimeCampCount,
+               A.camp_count campCount,A.target_user_num targetUserNum,A.warm_up_user_num warmUpUserNum,
+               A.offline_camp_count offlineCampCount,A.issue_user_num issueUserNum,
+               A.countact_user_num countactUserNum,A.sucess_user_num sucessUserNum,
+               CASE WHEN A.COUNTACT_USER_NUM = 0 THEN '0%' ELSE CONCAT(FORMAT(A.COUNTACT_USER_NUM * 100.0 / A.issue_user_num, 2) , '%') END contactRate,
+               CASE WHEN A.sucess_user_num = 0 THEN '0%' ELSE CONCAT(FORMAT(A.sucess_user_num * 100.0 / A.COUNTACT_USER_NUM, 2) , '%') END   conversionRate,
+               CASE WHEN A.INTIME_CAMP_COUNT = 0 THEN '0%' ELSE CONCAT(FORMAT(A.INTIME_CAMP_COUNT * 100.0 / A.XF_CAMP_COUNT, 2) , '%') END   timelinessRatio,
+               B.START_TIME startTime,B.END_TIME endTime, A.city_id cityId,A.city_name cityName,
+               A.COUNTY_ID countyId,A.COUNTY_NAME countyName,A.MANAGER_ID managerId,A.MANAGER_NAME managerName,
+               A.GRID_ID gridId,A.GRID_Name gridName,B.GROUP_CODE groupId,B.GROUP_NAME groupsName,B.GROUP_TYPE groupsType
+        from ENTERPRISE_MARKERING_EFFECT A
+        left join GROUP_MARKETING_TASK B on A.TASK_ID=B.ID WHERE 1=1
+        <if test="req.cityId != null and req.cityId != '' and req.cityId != '0'.toString() and req.cityId !='-1'.toString() ">
+            and A.city_id = #{req.cityId,jdbcType=VARCHAR}
+        </if>
+        <if test="req.countyId != null and req.countyId != '' and req.countyId != '0'.toString() and req.countyId !='-1'.toString() ">
+            and A.COUNTY_ID = #{req.countyId,jdbcType=VARCHAR}
+        </if>
+        <if test="req.managerId != null and req.managerId != '' and req.managerId != '0'.toString() and req.managerId !='-1'.toString() ">
+            and A.MANAGER_ID = #{req.managerId,jdbcType=VARCHAR}
+        </if>
+        <if test="req.gridId != null and req.gridId != '' and req.gridId != '0'.toString() and req.gridId !='-1'.toString() ">
+            and A.grid_id = #{req.gridId,jdbcType=VARCHAR}
+        </if>
+        <if test="req.groupsId != null and req.groupsId != '' and req.groupsId != '0'.toString() and req.groupsId !='-1'.toString() ">
+            and B.GROUP_CODE = #{req.groupsId,jdbcType=VARCHAR}
+        </if>
+        <if test="req.taskName != null and req.taskName != '' ">
+            and (A.TASK_ID like CONCAT('%',#{req.taskName,jdbcType=VARCHAR},'%') or A.task_name like CONCAT('%',#{req.taskName,jdbcType=VARCHAR},'%'))
+        </if>
+        <if test="req.startDay != null and req.startDay != '' ">
+            and DATE_FORMAT(b.START_TIME,'%Y-%m-%d') >=str_to_date(#{req.startDay,jdbcType=VARCHAR}, '%Y-%m-%d')
+        </if>
+        <if test="req.endDay != null and req.endDay != '' ">
+            and DATE_FORMAT(b.END_TIME,'%Y-%m-%d') >=str_to_date(#{req.endDay,jdbcType=VARCHAR}, '%Y-%m-%d')
+        </if>
+        <if test="req.inputGroupName != null and req.inputGroupName != '' ">
+            and (A.GROUP_NAME like CONCAT('%',#{req.inputGroupName,jdbcType=VARCHAR},'%'))
+        </if>
+        <if test="req.inputManager != null and req.inputManager != '' ">
+            and (A.MANAGER_ID like CONCAT('%',#{req.inputManager,jdbcType=VARCHAR},'%') or A.MANAGER_NAME like CONCAT('%',#{req.inputManager,jdbcType=VARCHAR},'%'))
+        </if>
+        <if test="req.inputCamp != null and req.inputCamp != '' ">
+            and (A.camp_id like CONCAT('%',#{req.inputCamp,jdbcType=VARCHAR},'%') or A.camp_name like CONCAT('%',#{req.inputCamp,jdbcType=VARCHAR},'%'))
+        </if>
+        <if test="req.selectGroupsType != null and req.selectGroupsType != '' ">
+            and B.GROUP_TYPE = #{req.selectGroupsType,jdbcType=VARCHAR}
+        </if>
+
+    </select>
+
+    <select id="queryExportMarketingNumList" resultType="com.asiainfo.biapp.pec.eval.jx.vo.Marketing" parameterType="com.asiainfo.biapp.pec.eval.jx.req.EnterpriseEvalReq">
+        select A.task_id taskId,A.task_name taskName,A.camp_id campId,A.camp_name CampName,A.plan_id planId,
+        A.plan_name planName, SUM(A.intime_camp_count) intimeCampCount,
+        SUM(A.camp_count) campCount,SUM(A.target_user_num) targetUserNum,SUM(A.warm_up_user_num) warmUpUserNum,
+        SUM(A.offline_camp_count) offlineCampCount,SUM(A.issue_user_num) issueUserNum,
+        SUM(A.countact_user_num) countactUserNum,SUM(A.sucess_user_num) sucessUserNum,
+        CASE  WHEN SUM(A.sucess_user_num) = 0 THEN '0%' ELSE CONCAT(FORMAT (SUM(A.sucess_user_num) * 100.0 / SUM(A.issue_user_num), 2) , '%') END contactRate,
+        CASE WHEN SUM(A.sucess_user_num) = 0 THEN '0%' ELSE CONCAT(FORMAT (SUM(A.sucess_user_num) * 100.0 / SUM(A.TARGET_USER_NUM), 2) , '%') END   conversionRate,
+        CASE  WHEN SUM(A.ISSUE_USER_NUM) = 0 THEN '0%'  ELSE CONCAT(FORMAT (SUM(A.ISSUE_USER_NUM) * 100.0 / SUM(A.INTIME_CAMP_COUNT), 2) , '%') END timelinessRatio,
+        B.START_TIME startTime,B.END_TIME endTime, A.city_id cityId,A.city_name cityName,B.GROUP_TYPE groupsType
+        <if test="req.cityId != '-1'.toString()">
+            ,A.COUNTY_NAME countyName,A.COUNTY_Id countyId
+        </if>
+        <if test="req.countyId != '0'.toString() and req.cityId !='0'.toString() ">
+            ,A.COUNTY_NAME countyName,A.COUNTY_Id countyId
+        </if>
+        <if test="req.managerId != '0'.toString() and req.cityId !='0'.toString() and req.countyId != '0'.toString()">
+            ,A.MANAGER_ID managerId,A.manager_name managerName
+        </if>
+        <if test="req.gridId != '0'.toString() and req.cityId !='0'.toString() and req.countyId != '0'.toString() and req.managerId != '0'.toString()">
+            ,A.grid_id gridId ,A.grid_name gridName
+        </if>
+        <if test="req.groupsId != '0'.toString() and req.cityId !='0'.toString() and req.countyId != '0'.toString() and req.managerId != '0'.toString() and req.gridId != '0'.toString()">
+            ,B.GROUP_CODE groupsId ,B.GROUP_NAME groupsName
+        </if>
+        from ENTERPRISE_MARKERING_EFFECT A
+        left join GROUP_MARKETING_TASK B on A.TASK_ID=B.ID WHERE 1=1
+        <if test="req.cityId != null and req.cityId != '' and req.cityId != '0'.toString() and req.cityId !='-1'.toString() ">
+            and A.city_id = #{req.cityId}
+        </if>
+        <if test="req.countyId != null and req.countyId != '' and req.countyId != '0'.toString() and req.countyId !='-1'.toString() ">
+            and A.COUNTY_ID = #{req.countyId}
+        </if>
+        <if test="req.managerId != null and req.managerId != '' and req.managerId != '0'.toString() and req.managerId !='-1'.toString() ">
+            and A.MANAGER_ID = #{req.managerId}
+        </if>
+        <if test="req.gridId != null and req.gridId != '' and req.gridId != '0'.toString() and req.gridId !='-1'.toString() ">
+            and A.grid_id = #{req.gridId}
+        </if>
+        <if test="req.groupsId != null and req.groupsId != '' and req.groupsId != '0'.toString() and req.groupsId !='-1'.toString() ">
+            and B.GROUP_CODE = #{req.groupsId}
+        </if>
+        <if test="req.taskName != null and req.taskName != '' ">
+            and (A.TASK_ID like CONCAT('%',#{req.taskName},'%') or A.task_name like CONCAT('%',#{req.taskName},'%'))
+        </if>
+        <if test="req.inputGroupName != null and req.inputGroupName != '' ">
+            and (A.GROUP_NAME like CONCAT('%',#{req.inputGroupName},'%'))
+        </if>
+        <if test="req.inputManager != null and req.inputManager != '' ">
+            and (A.MANAGER_ID like CONCAT('%',#{req.inputManager},'%') or A.MANAGER_NAME like CONCAT('%',#{req.inputManager},'%'))
+        </if>
+        <if test="req.startDay != null and req.startDay != '' ">
+            and DATE_FORMAT(b.START_TIME,'%Y-%m-%d') >=str_to_date(#{req.startDay,jdbcType=VARCHAR}, '%Y-%m-%d')
+        </if>
+        <if test="req.endDay != null and req.endDay != '' ">
+            and DATE_FORMAT(b.END_TIME,'%Y-%m-%d') >=str_to_date(#{req.endDay,jdbcType=VARCHAR}, '%Y-%m-%d')
+        </if>
+        <if test="req.inputCamp != null and req.inputCamp != '' ">
+            and (A.camp_id like CONCAT('%',#{req.inputCamp},'%') or A.camp_name like CONCAT('%',#{req.inputCamp},'%'))
+        </if>
+        <if test="req.selectGroupsType != null and req.selectGroupsType != '' ">
+            and B.GROUP_TYPE = #{req.selectGroupsType}
+        </if>
+        GROUP BY A.task_id, A.task_name, A.camp_id, A.camp_name, A.plan_id, A.plan_name
+        ,B.START_TIME,B.END_TIME ,A.city_id, A.city_name,B.GROUP_CODE
+        <if test="req.cityId != '-1'">
+            ,A.COUNTY_NAME,A.COUNTY_Id
+        </if>
+        <if test="req.countyId != '0' and req.cityId !='0' ">
+            ,A.COUNTY_NAME,A.COUNTY_Id
+        </if>
+        <if test="req.managerId != '0' and req.cityId !='0' and req.countyId != '0'">
+            ,A.manager_name,A.MANAGER_ID
+        </if>
+        <if test="req.gridId != '0' and req.cityId !='0' and req.countyId != '0' and req.managerId != '0'">
+            ,A.grid_id,A.grid_name
+        </if>
+        <if test="req.groupsId != '0' and req.cityId !='0' and req.countyId != '0' and req.managerId != '0' and req.gridId != '0'">
+            ,B.GROUP_CODE,B.GROUP_NAME
+        </if>
+    </select>
+
+    <select id="queryExportMarketingList" resultType="com.asiainfo.biapp.pec.eval.jx.vo.Marketing" parameterType="com.asiainfo.biapp.pec.eval.jx.req.EnterpriseEvalReq">
+        select A.task_id taskId,A.task_name taskName,A.camp_id campId,A.camp_name CampName,A.plan_id planId,
+        A.plan_name planName, A.intime_camp_count intimeCampCount,
+        A.camp_count campCount,A.target_user_num targetUserNum,A.warm_up_user_num warmUpUserNum,
+        A.offline_camp_count offlineCampCount,A.issue_user_num issueUserNum,
+        A.countact_user_num countactUserNum,A.sucess_user_num sucessUserNum,
+        CASE WHEN A.COUNTACT_USER_NUM = 0 THEN '0%' ELSE CONCAT(FORMAT(A.COUNTACT_USER_NUM * 100.0 / A.issue_user_num, 2) , '%') END contactRate,
+        CASE WHEN A.sucess_user_num = 0 THEN '0%' ELSE CONCAT(FORMAT(A.sucess_user_num * 100.0 / A.COUNTACT_USER_NUM, 2) , '%') END   conversionRate,
+        CASE WHEN A.INTIME_CAMP_COUNT = 0 THEN '0%' ELSE CONCAT(FORMAT(A.INTIME_CAMP_COUNT * 100.0 / A.XF_CAMP_COUNT, 2) , '%') END   timelinessRatio,
+        B.START_TIME startTime,B.END_TIME endTime, A.city_id cityId,A.city_name cityName,
+        A.COUNTY_ID countyId,A.COUNTY_NAME countyName,A.MANAGER_ID managerId,A.MANAGER_NAME managerName,
+        A.GRID_ID gridId,A.GRID_Name gridName,B.GROUP_CODE groupId,B.GROUP_NAME groupsName,B.GROUP_TYPE groupsType
+        from ENTERPRISE_MARKERING_EFFECT A
+        left join GROUP_MARKETING_TASK B on A.TASK_ID=B.ID WHERE 1=1
+        <if test="req.cityId != null and req.cityId != '' and req.cityId != '0'.toString() and req.cityId !='-1'.toString() ">
+            and A.city_id = #{req.cityId,jdbcType=VARCHAR}
+        </if>
+        <if test="req.countyId != null and req.countyId != '' and req.countyId != '0'.toString() and req.countyId !='-1'.toString() ">
+            and A.COUNTY_ID = #{req.countyId,jdbcType=VARCHAR}
+        </if>
+        <if test="req.managerId != null and req.managerId != '' and req.managerId != '0'.toString() and req.managerId !='-1'.toString() ">
+            and A.MANAGER_ID = #{req.managerId,jdbcType=VARCHAR}
+        </if>
+        <if test="req.gridId != null and req.gridId != '' and req.gridId != '0'.toString() and req.gridId !='-1'.toString() ">
+            and A.grid_id = #{req.gridId,jdbcType=VARCHAR}
+        </if>
+        <if test="req.groupsId != null and req.groupsId != '' and req.groupsId != '0'.toString() and req.groupsId !='-1'.toString() ">
+            and B.GROUP_CODE = #{req.groupsId,jdbcType=VARCHAR}
+        </if>
+        <if test="req.taskName != null and req.taskName != '' ">
+            and (A.TASK_ID like CONCAT('%',#{req.taskName,jdbcType=VARCHAR},'%') or A.task_name like CONCAT('%',#{req.taskName,jdbcType=VARCHAR},'%'))
+        </if>
+        <if test="req.startDay != null and req.startDay != '' ">
+            and DATE_FORMAT(b.START_TIME,'%Y-%m-%d') >=str_to_date(#{req.startDay,jdbcType=VARCHAR}, '%Y-%m-%d')
+        </if>
+        <if test="req.endDay != null and req.endDay != '' ">
+            and DATE_FORMAT(b.END_TIME,'%Y-%m-%d') >=str_to_date(#{req.endDay,jdbcType=VARCHAR}, '%Y-%m-%d')
+        </if>
+        <if test="req.inputGroupName != null and req.inputGroupName != '' ">
+            and (A.GROUP_NAME like CONCAT('%',#{req.inputGroupName,jdbcType=VARCHAR},'%'))
+        </if>
+        <if test="req.inputManager != null and req.inputManager != '' ">
+            and (A.MANAGER_ID like CONCAT('%',#{req.inputManager,jdbcType=VARCHAR},'%') or A.MANAGER_NAME like CONCAT('%',#{req.inputManager,jdbcType=VARCHAR},'%'))
+        </if>
+        <if test="req.inputCamp != null and req.inputCamp != '' ">
+            and (A.camp_id like CONCAT('%',#{req.inputCamp,jdbcType=VARCHAR},'%') or A.camp_name like CONCAT('%',#{req.inputCamp,jdbcType=VARCHAR},'%'))
+        </if>
+        <if test="req.selectGroupsType != null and req.selectGroupsType != '' ">
+            and B.GROUP_TYPE = #{req.selectGroupsType,jdbcType=VARCHAR}
+        </if>
+    </select>
+
+    <select id="getCaseData" resultType="map">
+
+        select t2.MARKET_DESC                                            as CUSTOMER_CONTENT,
+               case when  t3.BIZ_TYPE = 'BC' then '集团客户' else  '集团成员' end BIZ_TYPE,
+               t3.MARKETING_WORDS                                        as MARKET_CONTENT,
+               concat(t1.MARKET_OFFER_CODE, '-', t1.MARKET_PRODUCT_NAME) as PRODUCT_CONTENT
+        from GROUP_MARKETING_TASK t
+                 left join GROUP_MARKETING_SCHEME_INFO t1 on t.TASK_SCHEME_ID = t1.ID
+                 left join group_marketing_rule_info t2 on t.MARKET_RULE_ID = t2.ID
+                 left join group_product_def t3 on t1.MARKET_OFFER_CODE = t3.PRODUCT_ID
+                WHERE 1 = 1
+          and t.ID = #{taskId}
+    </select>
+
+    <insert id="saveCase" parameterType="com.asiainfo.biapp.pec.eval.jx.model.GroupMarketingCase">
+        INSERT INTO GROUP_MARKETING_CASE (ID, CASE_NAME, CASE_DESC, CUSTOMER_CONTENT, PRODUCT_CONTENT,
+                                          MARKET_CONTENT, CREATOR_ID, CREATOR_NAME, ORG_ID, BIZ_TYPE)
+        VALUES (#{ID}, #{caseName}, #{caseDes}, #{customerContent}, #{productContent},
+                #{marketContent}, #{userId}, #{userName}, #{userCity}, #{bizType})
+
+    </insert>
+
+</mapper>

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.asiainfo.biapp.pec.element.jx.custLabel.dao.McdCustChannelLabelMapper">
+    <insert id="insertCustChannelLabel" parameterType="com.asiainfo.biapp.pec.element.jx.custLabel.req.LabelModel">
+        insert into mcd_cust_label_config
+            (channel_id, channel_name, cust_label_ids, cust_label_names,create_user_id)
+        values (#{req.channelId}, #{req.channelName}, #{req.custLabelIds}, #{req.custLabelNames}, #{req.createUserId});
+    </insert>
+    <update id="updateChannelLabels" parameterType="com.asiainfo.biapp.pec.element.jx.custLabel.req.LabelModel">
+        update mcd_cust_label_config
+        <set>
+            <if test="req.custLabelIds != null and req.custLabelIds != ''">
+                cust_label_ids = #{req.custLabelIds,jdbcType=VARCHAR},
+            </if>
+            <if test="req.custLabelNames != null and req.custLabelNames != ''">
+                cust_label_names = #{req.custLabelNames,jdbcType=VARCHAR},
+            </if>
+            <if test="req.createUserId != null and req.createUserId != ''">
+                create_user_id = #{req.createUserId,jdbcType=VARCHAR},
+            </if>
+            update_time = now()
+        </set>
+        where channel_id = #{req.channelId,jdbcType=VARCHAR}
+    </update>
+    <delete id="deleteChannelLabel" parameterType="java.lang.String">
+        delete from mcd_cust_label_config where channel_id=#{channelId}
+    </delete>
+
+    <select id="queryChannelLabels" parameterType="com.asiainfo.biapp.pec.element.jx.custLabel.req.ChannelLabelReq" resultType="com.asiainfo.biapp.pec.element.jx.custLabel.vo.ChannelLabel">
+        SELECT
+            channel_id channelId,
+            channel_name channelName,
+            cust_label_ids custLabelIds,
+            cust_label_names custLabelNames,
+            create_user_id createUserId,
+            create_time createTime,
+            update_time updateTime
+        FROM mcd_cust_label_config
+        WHERE 1 = 1
+        <if test=" req.keyWords != null and req.keyWords != '' ">
+            AND (cust_label_ids like concat('%',#{req.keyWords},'%') or cust_label_names like concat('%',#{req.keyWords},'%'))
+        </if>
+        ORDER BY create_time DESC
+
+    </select>
+    <select id="queryLabelByChannel" resultType="java.lang.String">
+        select group_concat(ATTR_COL separator ',')
+        from mcd_custgroup_attr_list
+        where CUSTOM_GROUP_ID = #{customGroupId}
+          and ATTR_COL in (select cust_label_id from mcd_label_manual_config where channel_id = #{channelId} )
+
+    </select>
+    <select id="queryAllIopLabelByChannel"
+            resultType="com.asiainfo.biapp.pec.element.jx.custLabel.vo.ChannelLabel">
+        select channel_id channelId, channel_name channelName, cust_label_ids custLabelIds, cust_label_names custLabelNames
+        from mcd_cust_label_config
+        where channel_id = #{channelId}
+
+    </select>
+    <select id="queryLabelConfig" resultType="com.asiainfo.biapp.pec.element.jx.custLabel.vo.LabelInfo">
+        select cust_label_id as labelId,cust_label_name as labelName from mcd_label_manual_config where channel_id=#{channelId}
+    </select>
+    <select id="queryChannelLabelsCount" parameterType="com.asiainfo.biapp.pec.element.jx.custLabel.req.ChannelLabelReq" resultType="java.lang.Long">
+        SELECT
+        count(1)
+        FROM mcd_cust_label_config
+        WHERE 1 = 1
+        <if test=" req.keyWords != null and req.keyWords != '' ">
+            AND (cust_label_ids like concat('%',#{req.keyWords},'%') or cust_label_names like concat('%',#{req.keyWords},'%'))
+        </if>
+    </select>
+
+</mapper>

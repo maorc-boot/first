@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.asiainfo.biapp.pec.approve.jx.enterprise.dao.EnterpriseApproveDao">
+    <insert id="insertMcdCampsegTaskDate" parameterType="com.asiainfo.biapp.pec.approve.jx.enterprise.vo.McdCampTaskDate">
+        INSERT INTO mcd_camp_task_date(TASK_ID, DATA_DATE, EXEC_STATUS, CUST_LIST_COUNT,
+                                       PLAN_EXEC_TIME, CAMPSEG_ID)
+        VALUES  (#{taskDate.taskId},#{taskDate.dataDate},#{taskDate.execStatus},#{taskDate.custListCount},#{taskDate.planExecTime},#{taskDate.campsegId})
+    </insert>
+    <update id="updateCampsegInfo" parameterType="com.asiainfo.biapp.pec.approve.jx.enterprise.vo.McdCampDef">
+        update mcd_camp_def t set t.CAMPSEG_STAT_ID = #{campsegStatId}, t.APPROVE_RESULT=#{approveResult}  where t.CAMPSEG_ID = #{campsegId}
+    </update>
+    <update id="updateCampDefInfo" parameterType="com.asiainfo.biapp.pec.approve.jx.enterprise.vo.McdCampDef">
+        update mcd_camp_def t set t.CAMPSEG_STAT_ID = #{campsegStatId}, t.APPROVE_RESULT=#{approveResult}  where t.CAMPSEG_ID = #{campsegRootId}
+    </update>
+    <update id="updateChannelCampInfo" parameterType="com.asiainfo.biapp.pec.approve.jx.enterprise.vo.McdCampDef">
+        update mcd_camp_channel_list t set t.STATUS = #{campsegStatId}  where t.CAMPSEG_PID = #{campsegId}
+    </update>
+
+
+    <select id="queryDicApproveData" resultType="java.lang.String">
+        select DIC_VALUE as roleId
+        from MCD_SYS_DIC
+        where DIC_KEY = 'APPROVE'
+    </select>
+    <select id="queryApprove" parameterType="java.lang.String" resultType="com.asiainfo.biapp.pec.approve.jx.enterprise.vo.ApproveUserVo">
+        select users.USER_ID userId, users.USER_NAME userName
+        from mcd_sys_user users
+                 left join mcd_sys_user_role_relation relation on users.USER_ID = relation.USER_ID
+        where 1 = 1
+          and relation.ROLE_ID = #{roleId}
+    </select>
+    <select id="queryCampSegInfo" resultType="com.asiainfo.biapp.pec.approve.jx.enterprise.vo.McdCampDef">
+        select * from mcd_camp_def where CAMPSEG_ID = #{campSId}
+    </select>
+</mapper>

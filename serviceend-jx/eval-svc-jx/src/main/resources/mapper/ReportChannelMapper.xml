@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.asiainfo.biapp.pec.eval.jx.dao.ReportChannelMapper">
+
+    <resultMap id="BaseResultMap" type="com.asiainfo.biapp.pec.eval.jx.model.ReportChannelExprDt">
+        <result column="OP_TIME" jdbcType="VARCHAR" property="opTime" />
+        <result column="city_id" jdbcType="VARCHAR" property="cityId" />
+        <result column="city_name" jdbcType="VARCHAR" property="cityName" />
+        <result column="county_id" jdbcType="VARCHAR" property="countyId" />
+        <result column="COUNTY_NAME" jdbcType="VARCHAR" property="countyName" />
+        <result column="CHANNEL" jdbcType="VARCHAR" property="channel" />
+        <result column="OPER_ID" jdbcType="VARCHAR" property="operId" />
+        <result column="DYTJ" jdbcType="INTEGER" property="dytj" />
+        <result column="LJBL" jdbcType="INTEGER" property="ljbl" />
+        <result column="XYKL" jdbcType="INTEGER" property="xykl" />
+        <result column="ZSJJ" jdbcType="INTEGER" property="zsjj" />
+        <result column="IS_CZ" jdbcType="INTEGER" property="isCz" />
+        <result column="IS_BANLI" jdbcType="INTEGER" property="isBanLi" />
+        <result column="IS_SELF_BANLI" jdbcType="INTEGER" property="isSelfBanLi" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        A.OP_TIME, A.city_id, A.city_name, A.county_id, A.COUNTY_NAME, A.CHANNEL, A.OPER_ID, A.DYTJ, A.LJBL, A.XYKL, A.ZSJJ, A.IS_CZ, A.IS_BANLI, A.IS_SELF_BANLI
+    </sql>
+
+    <select id="getOrderProductDMDataByPage" resultMap="BaseResultMap" parameterType="com.asiainfo.biapp.pec.eval.jx.req.ReportFormReq">
+        select
+        <include refid="Base_Column_List"></include>
+        from ${tableName} A
+        <where>
+            <if test = "opTime != null and opTime !=''">
+                A.op_time = #{opTime}
+            </if>
+        </where>
+    </select>
+
+    <select id="getExitTable" parameterType="java.lang.String" statementType="STATEMENT" resultType="java.lang.String">
+    	select 1 from ${tableName} where 1=2
+    </select>
+
+</mapper>

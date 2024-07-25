@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.asiainfo.biapp.pec.preview.jx.mapper.McdChnPreUserNumMapper">
+
+    <select id="queryPreData" resultType="com.asiainfo.biapp.pec.preview.jx.entity.McdChnPreUserNum">
+        select t1.CUSTGROUP_ID custgroupId,
+               t1.DATA_DATE dataDate,
+               t1.CUST_FILE_NAME custFileName,
+               t1.CHANNEL_ID channelId,
+               t1.USER_NUM userNum,
+               t1.USER_RATIO userRatio,
+               t1.PRE_LEVEL preLevel,
+               t2.CHANNEL_NAME channelName
+        from mcd_chn_pre_user_num t1
+                 left join mcd_dim_channel t2 on t1.CHANNEL_ID = t2.CHANNEL_ID
+        where t1.CUSTGROUP_ID = #{custgroupId}
+            and t1.PRE_LEVEL = #{preLevel}
+            and t1.DATA_DATE = #{dataDate}
+
+    </select>
+</mapper>

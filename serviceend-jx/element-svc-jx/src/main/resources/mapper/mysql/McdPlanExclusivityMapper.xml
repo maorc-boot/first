@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.asiainfo.biapp.pec.element.jx.mapper.McdPlanExclusivityMapper">
+
+    <select id="getPlanExclusivityList"  parameterType="String" resultType="com.asiainfo.biapp.pec.element.jx.entity.McdPlanExclusivity">
+
+    select PLAN_ID, PLAN_NAME,GROUP_CONCAT(EX_PLAN_ID) EX_PLAN_ID,group_concat(EX_PLAN_NAME) EX_PLAN_NAME
+    from MCD_PLAN_EXCLUSIVITY
+    WHERE   SOURCE_TYPE = 0
+
+      <if test="keyWords != null and keyWords !='' ">
+
+          AND (PLAN_ID LIKE  concat( '%',#{keyWords},'%') OR PLAN_NAME LIKE  concat( '%',#{keyWords},'%'))
+
+      </if>
+
+     group by PLAN_ID,PLAN_NAME
+
+
+    </select>
+
+
+    <select id="queryExclusByPlanId" parameterType="String" resultType="com.asiainfo.biapp.pec.element.jx.entity.McdPlanExclusivity">
+        select t1.* from MCD_PLAN_EXCLUSIVITY t1
+        join (
+        select if(mpg.PLAN_GROUP_TYPE = 'W',mpg.EXCLUDE_GROUP_ID,mpg.PLAN_GROUP_ID) exclude_group
+        from MCD_PLAN_GROUP mpg join MCD_PLAN_EXCLUSIVITY mpe on mpe.PLAN_GROUP_ID=mpg.PLAN_GROUP_ID
+        where mpe.SOURCE_TYPE= 0
+        and mpg.SOURCE_TYPE=0
+        <if test="planId != null and planId != ''">
+            and mpe.PLAN_ID= #{planId}
+        </if>
+        and mpe.type=1) t2
+        on t1.PLAN_GROUP_ID=t2.exclude_group where t1.SOURCE_TYPE = 0
+
+        <if test="planId != null and planId != ''">
+            and t1.PLAN_ID != #{planId}
+        </if>
+
+    </select>
+
+
+
+</mapper>

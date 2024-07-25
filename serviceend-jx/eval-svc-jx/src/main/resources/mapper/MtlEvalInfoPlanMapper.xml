@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.asiainfo.biapp.pec.eval.jx.dao.MtlEvalInfoPlanMapper">
+    <select id="queryEvalInfoPlanPage" resultType="com.asiainfo.biapp.pec.eval.jx.model.MtlEvalInfoPlan"
+            parameterType="com.asiainfo.biapp.pec.eval.jx.req.PlanEvalPageQuery">
+        select MEIP.*,
+        mdc.CHANNEL_NAME,
+        msc.CITY_NAME,
+        dpc.COUNTY_NAME
+        from MTL_EVAL_INFO_PLAN_${query.viewType} MEIP
+        left join mcd_dim_channel mdc on MEIP.CHANNEL_ID = mdc.CHANNEL_ID
+        left join mcd_sys_city msc on MEIP.CITY_ID = msc.CITY_ID
+        left join dim_pub_county dpc on MEIP.COUNTY_ID = dpc.COUNTY_ID
+        where 1 = 1
+        <if test="query.statStartDate != null and query.statStartDate != '' and query.statEndDate != null and query.statEndDate != ''   ">
+             and MEIP.STAT_DATE between #{query.statStartDate} and #{query.statEndDate}
+        </if>
+        <if test="query.channelId != null and query.channelId != '' and query.channelId != '-1'.toString()  ">
+            and MEIP.CHANNEL_ID = #{query.channelId}
+        </if>
+        <if test="query.cityId != null and query.cityId != '' and query.cityId != '-1'.toString() ">
+            and MEIP.CITY_ID = #{query.cityId}
+        </if>
+        <if test="query.countyId != null and query.countyId != '' and query.countyId != '-1'.toString()  ">
+            and MEIP.COUNTY_ID = #{query.countyId}
+        </if>
+        <if test="query.keyWords != null and query.keyWords != '' ">
+            and ( MEIP.plan_id like concat('%',#{query.keyWords},'%') or MEIP.plan_name like
+            concat('%',#{query.keyWords},'%') )
+        </if>
+    </select>
+
+</mapper>

@@ -1,0 +1,393 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.asiainfo.biapp.pec.eval.jx.dao.CampEvalMapper">
+
+    <select id="queryDayUseEffect" resultType="com.asiainfo.biapp.pec.eval.jx.vo.UseEffectVo">
+        SELECT T1.CITY_NAME        cityName,
+        T2.CITY_ID cityId,
+        IFNULL(T2.VAL_CAMP, 0) campNum,
+        IFNULL(T2.VAL_SUC, 0)  succNum,
+        IFNULL(T2.RATE, 0)     succRate
+        FROM MCD_DIM_CITY T1
+        LEFT  JOIN(SELECT T.CITY_ID                                                   CITY_ID,
+        SUM(T.jiechu)                                                                AS VAL_CAMP,
+        SUM(T.chenggong)                                                             AS VAL_SUC,
+        CASE WHEN SUM(T.jiechu) = 0 THEN 0 ELSE SUM(T.chenggong) / SUM(T.jiechu) END AS RATE
+        FROM MTL_CAMPSEG_EVAULATE_DAY T
+        WHERE 1 = 1
+        AND date_format(T.DATA_DATE, '%Y%m%d') = #{dataDate}
+        GROUP BY T.CITY_ID) T2 ON T2.CITY_ID = T1.CITY_ID
+        WHERE 1 = 1
+        ORDER BY T1.CITY_ID
+    </select>
+
+    <select id="queryMonthUseEffect" resultType="com.asiainfo.biapp.pec.eval.jx.vo.UseEffectVo">
+        SELECT T1.CITY_NAME           cityName,
+        T2.CITY_ID cityId,
+        IFNULL(T2.VAL_CAMP, 0) campNum,
+        IFNULL(T2.VAL_SUC, 0)  succNum,
+        IFNULL(T2.RATE, 0)     succRate
+        FROM MCD_DIM_CITY T1
+        LEFT JOIN (SELECT T.CITY_ID                                                   CITY_ID,
+        SUM(T.TARGET_USER_NUM)                                   AS VAL_USER,
+        SUM(T.CAMP_USER_NUM)                                     AS VAL_CAMP,
+        SUM(T.CAMP_SUCC_NUM)                                     AS VAL_SUC,
+        CASE
+        WHEN SUM(T.CAMP_USER_NUM) = 0 then 0
+        else SUM(T.CAMP_SUCC_NUM) / SUM(T.CAMP_USER_NUM) end AS RATE
+        FROM mtl_eval_info_plan_m T
+        WHERE 1 = 1
+        AND T.STAT_DATE = '202301'
+        GROUP BY T.CITY_ID) T2 ON T2.CITY_ID = T1.CITY_ID
+        WHERE 1 = 1
+        ORDER BY T1.CITY_ID
+    </select>
+
+    <select id="queryCampEffect" parameterType="com.asiainfo.biapp.pec.eval.jx.req.CampEvalReq" resultType="com.asiainfo.biapp.pec.eval.jx.vo.CampEvalVo">
+
+        SELECT START_DATE startDate,
+        END_DATE endDate ,
+        <if test="param.campsegType != '0'.toString()">
+            CAMPSEG_TYPE campsegTypeName,
+        </if>
+        CAMPSEG_PID campsegRootId,
+        CAMPSEG_NAME campsegName,
+        PLAN_TYPE planTypeName ,
+        PLAN_NAME planName,
+        CREATECITY_NAME,
+        CREATE_USERID,
+        <if test="param.cityId != '0'.toString()">
+            CITY_ID cityId ,
+            CITY_NAME cityName,
+        </if>
+        <if test="param.cityId != '0'.toString() and param.countyId != 0">
+            COUNTY_ID countyId,
+            COUNTY_NAME countyName,
+        </if>
+
+        <if test="param.channelId != '0'.toString()">
+            CHANNEL channelId,
+            CHANNEL_NAME channelName,
+        </if>
+    <choose>
+        <when test=" param.campsegType == '0'.toString() or  param.cityId == '0'.toString() or param.countyId == '0'.toString() or param.channelId == '0'.toString() ">
+            SUM( JIECHU) AS contactNum,
+            SUM( CHENGGONG) AS successNum,
+            CASE WHEN SUM(JIECHU) = 0 THEN '0' ELSE (ROUND(SUM(CHENGGONG)*100.0/SUM(JIECHU),2)) END AS successRate ,
+            AVG (SGMTNUM) AS totalNum ,
+            CASE WHEN AVG(SGMTNUM) = 0 THEN '0' ELSE (ROUND(SUM(JIECHU)*100.0/AVG(SGMTNUM),2)) END AS contactRate
+        </when>
+        <otherwise>
+            JIECHU as contactNum,
+            CHENGGONG AS successNum,
+            ROUND(RATE,2) AS successRate ,
+            SGMTNUM AS totalNum ,
+            ROUND(SUCCCONTACTRATIO,2) as contactRate
+        </otherwise>
+    </choose>
+         FROM MTL_CAMPSEG_EVAULATE mce
+         join
+        (
+            select CAMPSEG_ROOT_ID, CEP_EVENT_ID as event_flag
+            from mcd_camp_channel_list t
+            where 1 = 1
+           <if test=" param.eventList != null and param.eventList.length &gt; 0 ">
+            and CEP_EVENT_ID in (
+            <foreach collection="param.eventList" index="index" item="item" separator=",">
+                    #{item}
+            </foreach>
+               )
+           </if>
+            <if test=" param.channelId != '0'.toString() and  param.channelId != '-1'.toString()  ">
+                AND t.CHANNEL_ID = #{param.channelId}
+            </if>
+            group by CAMPSEG_ROOT_ID
+        ) event  on  mce.CAMPSEG_PID = event.CAMPSEG_ROOT_ID
+        WHERE 1 = 1
+        <if test=" param.cityId != '0'.toString() and  param.cityId != '-1'.toString()  ">
+            AND CITY_ID = #{param.cityId}
+        </if>
+        <if test=" param.countyId != '0'.toString() and  param.countyId != '-1'.toString()  ">
+            AND COUNTY_ID = #{param.countyId}
+        </if>
+        <if test=" param.channelId != '0'.toString() and  param.channelId != '-1'.toString()  ">
+            AND CHANNEL = #{param.channelId}
+        </if>
+        <if test=" param.campsegType != '0'.toString() and  param.campsegType != '-1'.toString()  ">
+            AND CAMPSEG_TYPE = #{param.campsegType}
+        </if>
+        <if test=" param.eventType == '1'.toString  ">
+            AND event_flag  is not null  and event_flag  != ''
+        </if>
+        <if test=" param.eventType == '2'.toString  ">
+            AND (event_flag  is  null or event_flag  = '')
+        </if>
+        <if test=" param.keyWords != null and  param.keyWords != ''  ">
+            AND (CAMPSEG_PID like concat('%',#{param.keyWords },'%') or CAMPSEG_NAME like concat('%',#{param.keyWords },'%'))
+        </if>
+        <if test=" param.campsegType == '0'.toString() or  param.cityId == '0'.toString() or param.countyId == 0 or param.channelId == '0'.toString()">
+            GROUP BY
+            START_DATE,END_DATE,CAMPSEG_TYPE,CAMPSEG_PID,CAMPSEG_NAME,PLAN_TYPE,PLAN_NAME,CREATECITY_NAME,CREATE_USERID
+            <if test=" param.campsegType != '0'.toString() ">
+                ,CAMPSEG_TYPE
+            </if>
+            <if test=" param.cityId != '0'.toString() ">
+                ,CITY_ID,
+                CITY_NAME
+            </if>
+            <if test=" param.cityId != '0'.toString()  and param.countyId != '0'.toString() ">
+                ,COUNTY_ID,
+                COUNTY_NAME
+            </if>
+            <if test=" param.channelId != '0'.toString() ">
+                ,CHANNEL,
+                CHANNEL_NAME
+            </if>
+        </if>
+        ORDER BY START_DATE DESC, CAMPSEG_PID, PLAN_TYPE
+    </select>
+
+
+
+
+    <select id="queryCampEffectDay" parameterType="com.asiainfo.biapp.pec.eval.jx.req.CampEvalReq" resultType="com.asiainfo.biapp.pec.eval.jx.vo.CampEvalVo">
+
+        SELECT START_DATE startDate,
+        END_DATE endDate ,
+        <if test="param.campsegType != '0'.toString()">
+            CAMPSEG_TYPE campsegTypeName,
+        </if>
+
+        CAMPSEG_PID campsegRootId,
+        CAMPSEG_NAME campsegName,
+        PLAN_TYPE planTypeName ,
+        PLAN_NAME planName,
+        CREATECITY_NAME,
+        CREATE_USERID,
+        <if test="param.cityId != '0'.toString()">
+            CITY_ID cityId ,
+            CITY_NAME cityName,
+        </if>
+        <if test="param.cityId != '0'.toString() and param.countyId != 0">
+            COUNTY_ID countyId,
+            COUNTY_NAME countyName,
+        </if>
+
+        <if test="param.channelId != '0'.toString()">
+            CHANNEL channelId,
+            CHANNEL_NAME channelName,
+        </if>
+        SUM( JIECHU) AS contactNum,
+        SUM( CHENGGONG) AS successNum,
+        CASE WHEN SUM(JIECHU) = 0 THEN '0' ELSE (ROUND(SUM(CHENGGONG)*100.0/SUM(JIECHU),2)) END AS successRate ,
+        AVG (SGMTNUM) AS totalNum ,
+        CASE WHEN AVG(SGMTNUM) = 0 THEN '0' ELSE (ROUND(SUM(JIECHU)*100.0/AVG(SGMTNUM),2)) END AS contactRate
+        FROM MTL_CAMPSEG_EVAULATE_DAY mce
+        join
+        (
+        select CAMPSEG_ROOT_ID, CEP_EVENT_ID as event_flag
+        from mcd_camp_channel_list t
+        where 1 = 1
+        and t.CEP_EVENT_ID is not null
+
+        <if test=" param.eventList != null and param.eventList.length &gt; 0 ">
+            and CEP_EVENT_ID in   (
+            <foreach collection="param.eventList" index="index" item="item" separator=",">
+                #{item}
+            </foreach>
+            )
+        </if>
+
+        <if test=" param.channelId != '0'.toString() and  param.channelId != '-1'.toString()  ">
+            AND t.CHANNEL_ID = #{param.channelId}
+        </if>
+        group by CAMPSEG_ROOT_ID
+        ) event  on  mce.CAMPSEG_PID = event.CAMPSEG_ROOT_ID
+        WHERE 1 = 1
+            AND DATA_DATE  &gt;= str_to_date(#{param.startDate },'%Y%m%d%H%i%s')
+            AND DATA_DATE &lt;= str_to_date(#{param.endDate },'%Y%m%d%H%i%s')
+        <if test=" param.cityId != '0'.toString() and  param.cityId != '-1'.toString()  ">
+            AND CITY_ID = #{param.cityId}
+        </if>
+        <if test=" param.countyId != '0'.toString() and  param.countyId != '-1'.toString()  ">
+            AND COUNTY_ID = #{param.countyId}
+        </if>
+        <if test=" param.channelId != '0'.toString() and  param.channelId != '-1'.toString()  ">
+            AND CHANNEL = #{param.channelId}
+        </if>
+        <if test=" param.campsegType != '0'.toString() and  param.campsegType != '-1'.toString()  ">
+            AND CAMPSEG_TYPE = #{param.campsegType}
+        </if>
+
+        <if test=" param.eventType == '1'.toString  ">
+            AND event_flag  is not null AND event_flag  != ''
+        </if>
+
+        <if test=" param.eventType == '2'.toString  ">
+            AND  (event_flag  is  null or event_flag  = '')
+        </if>
+        <if test=" param.keyWords != null and  param.keyWords != ''  ">
+            AND (CAMPSEG_PID like concat('%',#{param.keyWords },'%') or CAMPSEG_NAME like concat('%',#{param.keyWords },'%'))
+        </if>
+
+        GROUP BY
+        START_DATE,END_DATE,CAMPSEG_TYPE,CAMPSEG_PID,CAMPSEG_NAME,PLAN_TYPE,PLAN_NAME,CREATECITY_NAME,CREATE_USERID
+        <if test=" param.campsegType != '0'.toString() ">
+            ,CAMPSEG_TYPE
+        </if>
+        <if test=" param.cityId != '0'.toString() ">
+            ,CITY_ID,
+            CITY_NAME
+        </if>
+        <if test=" param.cityId != '0'.toString()  and param.countyId != '0'.toString() ">
+            ,COUNTY_ID,
+            COUNTY_NAME
+        </if>
+        <if test=" param.channelId != '0'.toString() ">
+            ,CHANNEL,
+            CHANNEL_NAME
+        </if>
+        ORDER BY START_DATE DESC, CAMPSEG_PID, PLAN_TYPE
+    </select>
+
+    <select id="queryCampEffectMonth" parameterType="com.asiainfo.biapp.pec.eval.jx.req.CampEvalReq" resultType="com.asiainfo.biapp.pec.eval.jx.vo.CampEvalVo">
+
+        SELECT START_DATE startDate,
+        END_DATE endDate ,
+        <if test="param.campsegType != '0'.toString()">
+            CAMPSEG_TYPE campsegTypeName,
+        </if>
+
+        CAMPSEG_PID campsegRootId,
+        CAMPSEG_NAME campsegName,
+        PLAN_TYPE planTypeName ,
+        PLAN_NAME planName,
+        CREATECITY_NAME,
+        CREATE_USERID,
+        <if test="param.cityId != '0'.toString()">
+            CITY_ID cityId ,
+            CITY_NAME cityName,
+        </if>
+        <if test="param.cityId != '0'.toString() and param.countyId != 0">
+            COUNTY_ID countyId,
+            COUNTY_NAME countyName,
+        </if>
+
+        <if test="param.channelId != '0'.toString()">
+            CHANNEL channelId,
+            CHANNEL_NAME channelName,
+        </if>
+        SUM( JIECHU) AS contactNum,
+        SUM( CHENGGONG) AS successNum,
+        CASE WHEN SUM(JIECHU) = 0 THEN '0' ELSE (ROUND(SUM(CHENGGONG)*100.0/SUM(JIECHU),2)) END AS successRate ,
+        AVG (SGMTNUM) AS totalNum ,
+        CASE WHEN AVG(SGMTNUM) = 0 THEN '0' ELSE (ROUND(SUM(JIECHU)*100.0/AVG(SGMTNUM),2)) END AS contactRate
+        FROM MTL_CAMPSEG_EVAULATE_MONTH mce
+        join
+        (
+        select CAMPSEG_ROOT_ID, CEP_EVENT_ID as event_flag
+        from mcd_camp_channel_list t
+        where 1 = 1
+        and t.CEP_EVENT_ID is not null
+
+        <if test=" param.eventList != null and param.eventList.length &gt; 0 ">
+            and CEP_EVENT_ID in  (
+            <foreach collection="param.eventList" index="index" item="item" separator=",">
+                #{item}
+            </foreach>
+            )
+        </if>
+
+        <if test=" param.channelId != '0'.toString() and  param.channelId != '-1'.toString()  ">
+            AND t.CHANNEL_ID = #{param.channelId}
+        </if>
+        group by CAMPSEG_ROOT_ID
+        ) event  on  mce.CAMPSEG_PID = event.CAMPSEG_ROOT_ID
+        WHERE 1 = 1
+        AND DATA_DATE  &gt;= str_to_date(#{param.startDate },'%Y%m%d%H%i%s')
+        AND DATA_DATE &lt;= str_to_date(#{param.endDate },'%Y%m%d%H%i%s')
+        <if test=" param.cityId != '0'.toString() and  param.cityId != '-1'.toString()  ">
+            AND CITY_ID = #{param.cityId}
+        </if>
+        <if test=" param.countyId != '0'.toString() and  param.countyId != '-1'.toString()  ">
+            AND COUNTY_ID = #{param.countyId}
+        </if>
+        <if test=" param.channelId != '0'.toString() and  param.channelId != '-1'.toString()  ">
+            AND CHANNEL = #{param.channelId}
+        </if>
+        <if test=" param.campsegType != '0'.toString() and  param.campsegType != '-1'.toString()  ">
+            AND CAMPSEG_TYPE = #{param.campsegType}
+        </if>
+
+        <if test=" param.eventType == '1'.toString  ">
+            AND event_flag  is not null AND event_flag  != ''
+        </if>
+
+        <if test=" param.eventType == '2'.toString  ">
+            AND (event_flag  is  null or event_flag  = '')
+        </if>
+        <if test=" param.keyWords != null and  param.keyWords != ''  ">
+            AND (CAMPSEG_PID like concat('%',#{param.keyWords },'%') or CAMPSEG_NAME like concat('%',#{param.keyWords },'%'))
+        </if>
+
+        GROUP BY
+        START_DATE,END_DATE,CAMPSEG_TYPE,CAMPSEG_PID,CAMPSEG_NAME,PLAN_TYPE,PLAN_NAME,CREATECITY_NAME,CREATE_USERID
+        <if test=" param.campsegType != '0'.toString() ">
+            ,CAMPSEG_TYPE
+        </if>
+        <if test=" param.cityId != '0'.toString() ">
+            ,CITY_ID,
+            CITY_NAME
+        </if>
+        <if test=" param.cityId != '0'.toString()  and param.countyId != '0'.toString() ">
+            ,COUNTY_ID,
+            COUNTY_NAME
+        </if>
+        <if test=" param.channelId != '0'.toString() ">
+            ,CHANNEL,
+            CHANNEL_NAME
+        </if>
+        ORDER BY START_DATE DESC, CAMPSEG_PID, PLAN_TYPE
+    </select>
+
+    <select id="queryChannelRadarMap" resultType="Map" parameterType="com.asiainfo.biapp.pec.eval.jx.req.ChannelRadarMapReq">
+        select mcem.CHANNEL_NAME, mcem.CHANNEL,
+        CASE WHEN SUM(SGMTNUM) = 0 THEN '0' ELSE sum(JIECHU) / sum(SGMTNUM) end as CHANNEL_CHUDA_RADIO,
+        CASE WHEN SUM(JIECHU) = 0 THEN '0' ELSE sum(CHENGGONG) / sum(JIECHU) end as CHANNEL_ZHUANHUA_RADIO
+        from
+        MTL_CAMPSEG_EVAULATE_MONTH mcem
+        <if test = "channelType != null and channelType !=''">
+            left join mcd_dim_channel mdc on mcem.CHANNEL = mdc.CHANNEL_ID
+        </if>
+        <where>
+            <if test = "date != null and date !=''">
+                and date_format(mcem.DATA_DATE, '%Y-%m') &gt;= #{date}
+            </if>
+            <if test = "date != null and date !=''">
+                and date_format(mcem.DATA_DATE, '%Y-%m') &lt;= #{date}
+            </if>
+            <if test = "cityId != null and cityId !=''">
+                and mcem.CITY_ID = #{cityId}
+            </if>
+            <if test = "countyId != null and countyId !=''">
+                and mcem.COUNTY_ID = #{countyId}
+            </if>
+            <if test = "channelType != null and channelType !=''">
+                and mdc.CHANNEL_TYPE = #{channelType}
+            </if>
+        </where>
+        group by mcem.CHANNEL
+    </select>
+
+    <select id="queryChannelCampCount" resultType="Map">
+        select count(CAMPSEG_ID) fenzi, CHANNEL_ID from mcd_camp_channel_list
+        where STATUS in (54, 90)
+        group by CHANNEL_ID;
+    </select>
+
+    <select id="queryCampCount" resultType="int">
+        select count(distinct CAMPSEG_ROOT_ID) fenmu from mcd_camp_channel_list
+        where STATUS in (54, 90);
+    </select>
+
+</mapper>

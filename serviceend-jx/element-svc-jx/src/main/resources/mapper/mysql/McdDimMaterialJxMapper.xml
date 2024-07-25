@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.asiainfo.biapp.pec.element.jx.material.dao.McdDimMaterialJxDao">
+
+  <!-- 通用查询映射结果 -->
+  <resultMap id="BaseResultMap" type="com.asiainfo.biapp.pec.element.jx.material.model.McdDimMaterialJxModel">
+    <id column="MATERIAL_ID" property="materialId" />
+    <result column="MATERIAL_NAME" property="materialName" />
+    <result column="MATERIAL_TYPE" property="materialType" />
+    <result column="CHANNEL_ID" property="channelId" />
+    <result column="CONTACT_ID" property="contactId" />
+    <result column="POSITION_ID" property="positionId" />
+    <result column="CONTENT" property="content" />
+    <result column="ATTACHMENT_NAME" property="attachmentName" />
+    <result column="MATERIAL_SIZE" property="materialSize" />
+    <result column="MATERIAL_PIC_SIZE" property="materialPicSize" />
+    <result column="RESOURCE_URL" property="resourceUrl" />
+    <result column="TARGET_URL" property="targetUrl" />
+    <result column="MATERIAL_STATUS" property="materialStatus" />
+    <result column="DESCRIPTION" property="description" />
+    <result column="CREATE_TIME" property="createTime" />
+    <result column="APPROVE_FLOW_ID" property="approveFlowId" />
+    <result column="VISIT_URL" property="visitUrl" />
+    <result column="USE_TIMES" property="useTimes" />
+    <result column="EXCELLENCE" property="excellence" />
+    <result column="UPDATE_TIME" property="updateTime" />
+    <result column="CREATOR" property="creator" />
+    <result column="ONLINE_STATUS" property="onlineStatus" />
+    <result column="PLAN_ID" property="planId" />
+    <result column="PLAN_NAME" property="planName" />
+    <result column="INVALID_DATE" property="invalidDate" />
+  </resultMap>
+  <!--excel导入批量-->
+  <insert id="batchSaveMaterials" parameterType="list">
+    insert into mcd_dim_material
+    (MATERIAL_ID,MATERIAL_NAME, MATERIAL_TYPE,PLAN_ID,PLAN_NAME,CHANNEL_ID,
+    POSITION_ID,CONTENT,TARGET_URL,MATERIAL_STATUS,DESCRIPTION,
+    MATERIAL_PIC_SIZE,INVALID_DATE,CREATOR)
+    VALUES
+    <foreach collection="collection" item="item" index="index" separator=",">
+      <trim prefix="(" suffix=")" suffixOverrides=",">
+        #{item.materialId,jdbcType=VARCHAR},
+        #{item.materialName,jdbcType=VARCHAR},
+        #{item.materialType,jdbcType=INTEGER},
+        #{item.planId,jdbcType=VARCHAR},
+        #{item.planName,jdbcType=VARCHAR},
+        #{item.channelId,jdbcType=VARCHAR},
+        #{item.positionId,jdbcType=VARCHAR},
+        #{item.content,jdbcType=VARCHAR},
+        #{item.targetUrl,jdbcType=VARCHAR},
+        #{item.materialStatus,jdbcType=INTEGER},
+        #{item.description,jdbcType=VARCHAR},
+        #{item.materialPicSize,jdbcType=VARCHAR},
+        #{item.invalidDate,jdbcType=TIMESTAMP}
+        #{item.creator,jdbcType=VARCHAR}
+      </trim>
+    </foreach>
+  </insert>
+
+
+  <!-- 导出查询映射结果 -->
+  <resultMap id="exportResultMap" type="com.asiainfo.biapp.pec.element.jx.material.response.actionFrom.DimActionJxFrom">
+    <id column="MATERIAL_ID" property="materialId" />
+    <result column="MATERIAL_NAME" property="materialName" />
+    <result column="PLAN_ID" property="planId" />
+    <result column="PLAN_NAME" property="planName" />
+    <result column="CHANNEL_ID" property="channelId" />
+    <result column="CHANNEL_NAME" property="channelName" />
+    <result column="POSITION_ID" property="positionId" />
+    <result column="ADIV_NAME" property="positionName" />
+    <result column="INVALID_DATE" property="invalidDate" />
+    <result column="MATERIAL_TYPE" property="materialType" />
+    <result column="MATERIAL_TYPE_NAME" property="materialTypeName" />
+    <result column="CONTENT" property="content" />
+    <result column="TARGET_URL" property="targetUrl" />
+    <result column="DESCRIPTION" property="description" />
+    <result column="MATERIAL_STATUS" property="materialStatus" />
+    <result column="CREATOR" property="creator" />
+
+  </resultMap>
+
+  <select id="selectFromList" resultMap="exportResultMap">
+
+    select  mdm.MATERIAL_ID,mdm.MATERIAL_NAME,mdm.PLAN_ID,mdm.PLAN_NAME,mdm.CHANNEL_ID,mdch.CHANNEL_NAME,
+    mdm.POSITION_ID,mdai.ADIV_NAME,mdm.INVALID_DATE,mdm.MATERIAL_TYPE,mden.ENUM_VALUE AS MATERIAL_TYPE_NAME,
+    mdm.CONTENT,mdm.TARGET_URL,mdm.DESCRIPTION,mdm.MATERIAL_STATUS,mdm.CREATOR
+    from mcd_dim_material mdm
+    left join mcd_dim_channel mdch on mdm.CHANNEL_ID =mdch.CHANNEL_ID
+    left join mcd_sys_enum mden on mdm.MATERIAL_TYPE =mden.ENUM_KEY
+    left join  mcd_dim_adiv_info mdai on  mdm.POSITION_ID =mdai.ADIV_ID
+    where  mden.ENUM_TYPE ='iop_material_type'
+
+    <if test="exportQ.materialName != null and exportQ.materialName != ''">
+      and mdm.MATERIAL_NAME like concat('%',#{exportQ.materialName},'%')
+    </if>
+
+    <if test="exportQ.materialType != null and exportQ.materialType != ''">
+      and mdm.MATERIAL_TYPE = #{exportQ.materialType}
+    </if>
+
+    <if test="exportQ.planIdOrName != null and exportQ.planIdOrName != ''">
+      and (mdm.PLAN_ID like concat('%',#{exportQ.planIdOrName},'%') or mdm.PLAN_NAME like concat('%',#{exportQ.planIdOrName},'%') )
+    </if>
+
+    <if test="exportQ.channelId != null and exportQ.channelId != ''">
+      and mdm.CHANNEL_ID = #{exportQ.channelId}
+    </if>
+
+    <if test="exportQ.startDate != null and exportQ.startDate != ''">
+      and mdm.CREATE_TIME >= #{exportQ.startDate}
+    </if>
+
+    <if test="exportQ.endDate != null and exportQ.endDate != ''">
+      and mdm.CREATE_TIME &lt; #{exportQ.endDate}
+    </if>
+
+  </select>
+
+  <select id="selectPageList" resultType="com.asiainfo.biapp.pec.element.jx.material.response.DimMaterialJxResponse"
+          parameterType="com.asiainfo.biapp.pec.element.dto.request.DimMaterialPageListRequest">
+    select mdm.*,
+    mdai.ADIV_NAME positionName,
+    mdc.CONTACT_NAME,
+    m.CHANNEL_NAME
+    from
+    mcd_dim_material mdm
+    left join mcd_dim_adiv_info mdai on mdm.CHANNEL_ID = mdai.CHANNEL_ID
+    left join mcd_dim_contact mdc on mdm.CONTACT_ID = mdc.CONTACT_ID
+    left join mcd_dim_channel m on mdc.CHANNEL_ID = m.CHANNEL_ID
+    where 1=1
+    <if test="request.materialType != null and request.materialType != ''">
+      and mdm.MATERIAL_TYPE = #{request.materialType,jdbcType=VARCHAR}
+    </if>
+    <if test="request.keyWords != null and request.keyWords != ''">
+      and mdm.MATERIAL_NAME like concat('%',#{request.keyWords,jdbcType=VARCHAR},'%')
+    </if>
+    order by mdm.CREATE_TIME desc
+  </select>
+
+  <!--添加到优秀素材库-->
+  <update id="addExcellenceById" parameterType="java.lang.String">
+    update mcd_dim_material set EXCELLENCE = 1 where MATERIAL_ID = #{materialId,jdbcType=VARCHAR}
+  </update>
+  <!--移除出优秀素材库-->
+  <update id="removeExcellenceById" parameterType="java.lang.String">
+    update mcd_dim_material set EXCELLENCE = 0 where MATERIAL_ID = #{materialId,jdbcType=VARCHAR}
+  </update>
+
+  <!--审批通过修改状态-->
+  <update id="updateByFlowId" parameterType="map">
+    update mcd_dim_material set  MATERIAL_STATUS = #{materialStat,jdbcType=INTEGER}
+    where APPROVE_FLOW_ID = #{flowId,jdbcType=VARCHAR}
+  </update>
+
+  <!--修改上下线状态-->
+  <update id="saveOrUpdatePlanStatus" parameterType="map">
+    update mcd_dim_material set ONLINE_STATUS = #{statusId,jdbcType=VARCHAR}
+    where MATERIAL_ID = #{materialId,jdbcType=VARCHAR}
+  </update>
+
+  <!--修改素材信息-->
+  <update id="updateByMaterialId">
+    update  mcd_dim_material set
+    MATERIAL_NAME=#{mcdDimMaterial.materialName,jdbcType=VARCHAR},
+    MATERIAL_TYPE=#{mcdDimMaterial.materialType,jdbcType=INTEGER},
+    CHANNEL_ID=#{mcdDimMaterial.channelId,jdbcType=VARCHAR},
+    CONTACT_ID=#{mcdDimMaterial.contactId,jdbcType=VARCHAR},
+    POSITION_ID=#{mcdDimMaterial.positionId,jdbcType=VARCHAR},
+    CONTENT=#{mcdDimMaterial.content,jdbcType=VARCHAR},
+    RESOURCE_URL=#{mcdDimMaterial.resourceUrl,jdbcType=VARCHAR},
+    TARGET_URL=#{param1.targetUrl,jdbcType=VARCHAR},
+    DESCRIPTION=#{mcdDimMaterial.description,jdbcType=VARCHAR},
+    ATTACHMENT_NAME=#{mcdDimMaterial.resourceName,jdbcType=VARCHAR},
+    MATERIAL_SIZE=#{mcdDimMaterial.resourceSize,jdbcType=VARCHAR},
+    MATERIAL_PIC_SIZE=#{mcdDimMaterial.materialPicSize,jdbcType=VARCHAR},
+    MATERIAL_STATUS=#{mcdDimMaterial.materialStatus,jdbcType=INTEGER},
+    VISIT_URL=#{mcdDimMaterial.visitUrl,jdbcType=VARCHAR}
+    where MATERIAL_ID= #{mcdDimMaterial.materialId,jdbcType=VARCHAR}
+  </update>
+
+
+  <select id="qryApprRecord" resultType="com.asiainfo.biapp.pec.element.query.appr.ApprRecord">
+    select mdm.MATERIAL_ID,
+      mdm.MATERIAL_NAME,
+      mdm.CREATOR,
+      msu.USER_NAME,
+      mdm.CREATE_TIME,
+      '素材' TYPE
+    from mcd_dim_material mdm left join mcd_sys_user msu  on mdm.CREATOR = msu.user_id
+    where 1=1
+    <if test="materialIds.size()>0">
+      and  mdm.MATERIAL_ID in
+      <foreach collection="materialIds" item="materialIds" open="(" close=")" separator=",">
+        #{materialIds,jdbcType=VARCHAR}
+      </foreach>
+    </if>
+
+    <if test="param.materialType != null and param.materialType != ''">
+
+        and mdm.MATERIAL_TYPE = #{param.materialType}
+    </if>
+
+
+    <if test="param.materialName != null and param.materialName != ''">
+
+      and ( mdm.MATERIAL_NAME like concat('%',#{param.materialName},'%') or mdm.MATERIAL_ID like concat('%',#{param.materialName},'%'))
+    </if>
+
+    <if test="param.channelId != null and param.channelId != ''">
+
+      and mdm.CHANNEL_ID = #{param.channelId}
+    </if>
+
+    <if test="param.creator != null and param.creator != ''">
+
+      and mdm.CREATOR = #{param.creator}
+    </if>
+
+    order by mdm.CREATE_TIME DESC
+  </select>
+
+  <delete id="removeMyMaterialById" parameterType="java.lang.String">
+    delete from mcd_dim_material where MATERIAL_ID = #{materialId,jdbcType=VARCHAR}
+  </delete>
+</mapper>

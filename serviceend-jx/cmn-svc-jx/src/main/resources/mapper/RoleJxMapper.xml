@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.asiainfo.biapp.cmn.jx.dao.RoleJxDao">
+
+    <select id="pageListRoleVo" resultType="com.asiainfo.biapp.cmn.vo.RoleVO">
+        select
+        distinct
+        GROUP_CONCAT(DISTINCT d.TITLE separator ',') as department,
+        GROUP_CONCAT(DISTINCT d.DEPT_ID separator ',')  as departmentId,
+        r.*
+        from
+        mcd_sys_role r
+        left join `mcd_sys_role_department_relation` rdr on
+        r.ROLE_ID = rdr.ROLE_ID
+        left join `mcd_sys_department` d on
+        rdr.DEPT_ID = d.DEPT_ID
+        where
+        r.DEL_FLAG = 0
+        <if test="keyWords != null and keyWords!= ''">
+            and CONCAT(IFNULL(r.ROLE_NAME,''))LIKE concat('%',#{keyWords},'%')
+        </if>
+        <if test="deptId != null and deptId!= ''">
+            and d.DEPT_ID = #{deptId}
+        </if>
+        group by
+        r.ROLE_ID
+        order by
+        r.CREATE_DATE desc
+    </select>
+
+
+
+
+
+</mapper>

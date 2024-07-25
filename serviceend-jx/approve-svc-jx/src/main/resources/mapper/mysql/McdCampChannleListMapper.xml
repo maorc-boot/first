@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.asiainfo.biapp.pec.approve.jx.dao.McdCampChannelListDao">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.asiainfo.biapp.pec.approve.jx.vo.McdCampChannelDetailVo" >
+
+        <result column="campseg_id"   property="campsegId" />
+        <result column="CAMPSEG_PID" property="campsegPid"/>
+        <result column="channel_id" property="channelId"/>
+        <result column="channel_name" property="channelName"/>
+        <result column="CHANNEL_ADIV_ID" property="adivId"/>
+        <result column="ADIV_NAME" property="adivName"/>
+        <result column="EXEC_CONTENT" property="execContent"/>
+        <result column="SMS_CONTENT" property="smsContent"/>
+        <result column="CEP_EVENT_ID" property="cepEventId"/>
+        <result column="CEP_SCENE_NAME" property="cepSceneName"/>
+        <result column="FREQUENCY" property="frequency"/>
+        <result column="UPDATE_CYCLE" property="updateCycle"/>
+    </resultMap>
+
+    <select id="getDeliveryChannels" resultMap="BaseResultMap">
+        select
+            mcd.campseg_id,
+            mcd.CAMPSEG_PID,
+            mcd.channel_id,
+            dmc.channel_name,
+            mcd.CHANNEL_ADIV_ID,
+            adiv.ADIV_NAME,
+            IFNULL(mcd.EXEC_CONTENT,"") EXEC_CONTENT,
+            IFNULL(mcd.SMS_CONTENT,"") SMS_CONTENT,
+            mcd.SMS_CONTENT,
+            mcd.CEP_EVENT_ID,
+            mcd.CEP_SCENE_NAME,
+            mcd.FREQUENCY,
+            case    mcd.UPDATE_CYCLE  when    mcd.UPDATE_CYCLE = 1 then "一次性" else "周期性" end UPDATE_CYCLE
+        from mcd_camp_channel_list mcd
+                 left join mcd_dim_channel dmc on mcd.channel_id = dmc.channel_id
+                 left join mcd_dim_adiv_info adiv on mcd.CHANNEL_ADIV_ID = adiv.ADIV_ID
+
+        where mcd.CAMPSEG_PID =  #{campsegId}
+    </select>
+
+</mapper>

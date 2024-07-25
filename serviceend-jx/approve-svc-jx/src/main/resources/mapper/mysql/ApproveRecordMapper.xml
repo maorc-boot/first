@@ -1,0 +1,353 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.asiainfo.biapp.pec.approve.jx.dao.ApproveRecordDao">
+    <select id="getApproverProcess" resultType="com.asiainfo.biapp.pec.approve.dto.ApproverProcessDTO">
+        select capn.PROCESS_ID processId,
+        capi.INSTANCE_ID instanceId,
+        capi.BUSINESS_ID businessId,
+        capn.NODE_ID nodeId,
+        capn.NODE_NAME nodeName,
+        capn.APPROVER approver,
+        capr.CREATE_DATE createDate,
+        capn.APPROVER_NAME approverName,
+        capr.DEAL_STATUS submitStatus,
+        capr.DEAL_OPINION dealOpinion,
+        capn.NEXT_NODE_ID nextNodesApprover
+        from cmp_approve_process_node capn
+        right join cmp_approval_process cap on capn.PROCESS_ID = cap.PROCESS_ID and capn.PROCESS_VERSION_NUM = cap.BERV
+        left join cmp_approve_process_instance capi on capn.PROCESS_ID=capi.PROCESS_ID
+        left join cmp_approve_process_record capr on capi.BUSINESS_ID = capr.BUSINESS_ID and capn.NODE_ID = capr.NODE_ID
+        where
+        <if test="businessId!=null">
+            capi.BUSINESS_ID =#{businessId}
+        </if>
+    </select>
+
+
+    <select id="getApproverProcessNew" resultType="com.asiainfo.biapp.pec.approve.jx.dto.ApproverProcessNewDTO">
+        select capn.PROCESS_ID processId,
+        capi.INSTANCE_ID instanceId,
+        capi.BUSINESS_ID businessId,
+        capn.NODE_ID nodeId,
+        capn.NODE_NAME nodeName,
+        capr.APPROVER approver,
+        capr.CREATE_DATE createDate,
+        capr.DEAL_TIME dealTime,
+        capr.APPROVER_NAME approverName,
+        capr.DEAL_STATUS submitStatus,
+        capr.DEAL_OPINION dealOpinion,
+        msd.TITLE approvalUserDept,
+        msc.CITY_NAME approvalUserCity,
+        capn.NODE_TYPE nodeType,
+        capn.NEXT_NODE_ID nextNodesApprover
+        from cmp_approve_process_node capn
+        right join cmp_approval_process cap on capn.PROCESS_ID = cap.PROCESS_ID and capn.PROCESS_VERSION_NUM = cap.BERV
+        left join cmp_approve_process_instance capi on capn.PROCESS_ID=capi.PROCESS_ID
+        left join cmp_approve_process_record capr on capi.BUSINESS_ID = capr.BUSINESS_ID and capn.NODE_ID = capr.NODE_ID
+        left join mcd_sys_user msu on msu.USER_ID = capr.APPROVER
+        left join mcd_sys_department msd on msu.DEPARTMENT_ID = msd.DEPT_ID
+        left join mcd_sys_city msc on msu.CITY_ID = msc.CITY_ID
+        where 1=1
+        and capr.DEAL_STATUS !=  4
+        <if test="businessId!=null">
+            and capi.BUSINESS_ID =#{businessId}
+
+        </if>
+        <if test="instanceId != null">
+            and capi.INSTANCE_ID = #{instanceId}
+            and capr.INSTANCE_ID = #{instanceId}
+        </if>
+        ORDER BY  capn.NODE_TYPE ASC , capr.DEAL_TIME ASC
+    </select>
+
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.asiainfo.biapp.pec.approve.jx.dto.CmpApproveProcessRecordJx">
+        <id column="ID" property="id"/>
+        <result column="BUSINESS_ID" property="businessId"/>
+        <result column="INSTANCE_ID" property="instanceId"/>
+        <result column="NODE_ID" property="nodeId"/>
+        <result column="NODE_NAME" property="nodeName"/>
+        <result column="NODE_TYPE" property="nodeType"/>
+        <result column="NODE_BUSINESS_NAME" property="nodeBusinessName"/>
+        <result column="APPROVER" property="approver"/>
+        <result column="APPROVER_NAME" property="approverName"/>
+        <result column="DEAL_OPINION" property="dealOpinion"/>
+        <result column="DEAL_STATUS" property="dealStatus"/>
+        <result column="DEAL_TIME" property="dealTime"/>
+        <result column="PRE_RECORD_ID" property="preRecordId"/>
+        <result column="EVENT_ID" property="eventId"/>
+        <result column="CREATE_DATE" property="createDate"/>
+        <result column="CREATE_BY" property="createBy"/>
+        <result column="MODIFY_DATE" property="modifyDate"/>
+        <result column="MODIFY_BY" property="modifyBy"/>
+        <result column="COMMUNICATION_STATE" property="communicationState"/>
+    </resultMap>
+
+
+    <select id="getRecordByUserNew" resultMap="BaseResultMap">
+
+        SELECT RECORD.*,C.DEAL_STATUS AS COMMUNICATION_STATE
+        FROM (
+        SELECT T.*
+        FROM CMP_APPROVE_PROCESS_RECORD T
+        WHERE (T.DEAL_STATUS = #{dealStatus} AND T.APPROVER = #{userId} AND NOT EXISTS(SELECT 1
+        FROM MCD_APPROVAL_ADVICE
+        WHERE INSTANCE_ID = T.INSTANCE_ID
+        AND NODE_ID = T.NODE_ID
+        AND DEAL_STATUS = '0'))
+        OR EXISTS(SELECT 1
+        FROM MCD_APPROVAL_ADVICE
+        WHERE INSTANCE_ID = T.INSTANCE_ID
+        AND NODE_ID = T.NODE_ID
+        AND APPROVER = #{userId}
+        AND DEAL_STATUS = '0') AND T.DEAL_STATUS = '0'
+        ) RECORD
+        LEFT JOIN (SELECT * FROM MCD_APPROVAL_ADVICE WHERE DEAL_STATUS = '0') C
+        ON RECORD.INSTANCE_ID = C.INSTANCE_ID and RECORD.NODE_ID = C.NODE_ID
+        LEFT JOIN CMP_APPROVE_PROCESS_INSTANCE INST ON
+        INST.INSTANCE_ID = RECORD.INSTANCE_ID
+        WHERE
+        INST.INSTANCE_STATUS != 3
+        <if test="list.size() > 0">
+
+            AND RECORD.BUSINESS_ID IN
+
+            <foreach collection="list" index="index" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        order by RECORD.CREATE_DATE desc
+
+    </select>
+
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="approvalResultMap" type="com.asiainfo.biapp.pec.approve.jx.dto.McdCampCmpApproveProcessRecordJx">
+        <id column="ID" property="id"/>
+        <result column="PROCESS_ID" property="processId"/>
+        <result column="BUSINESS_ID" property="businessId"/>
+        <result column="INSTANCE_ID" property="instanceId"/>
+        <result column="NODE_ID" property="nodeId"/>
+        <result column="NODE_NAME" property="nodeName"/>
+        <result column="NODE_TYPE" property="nodeType"/>
+        <result column="NODE_BUSINESS_NAME" property="nodeBusinessName"/>
+        <result column="APPROVER" property="approver"/>
+        <result column="APPROVER_NAME" property="approverName"/>
+        <result column="DEAL_OPINION" property="dealOpinion"/>
+        <result column="DEAL_STATUS" property="dealStatus"/>
+        <result column="DEAL_TIME" property="dealTime"/>
+        <result column="PRE_RECORD_ID" property="preRecordId"/>
+        <result column="EVENT_ID" property="eventId"/>
+        <result column="CREATE_DATE" property="createDate"/>
+        <result column="CREATE_BY" property="createBy"/>
+        <result column="MODIFY_DATE" property="modifyDate"/>
+        <result column="MODIFY_BY" property="modifyBy"/>
+        <result column="COMMUNICATION_STATE" property="communicationState"/>
+        <result column="CAMPSEG_ID" property="campsegId"/>
+        <result column="CAMPSEG_NAME" property="campsegName"/>
+        <result column="CREATE_USER_ID" property="createUserId"/>
+        <result column="USER_NAME" property="userName"/>
+        <result column="CAMP_SCENE" property="campScene"/>
+        <result column="CREATE_TIME" property="createTime"/>
+        <result column="TYPE" property="type"/>
+        <result column="CHANNEL_IDS" property="channelIds"/>
+    </resultMap>
+
+
+    <select id="queryCampAppRecord" resultMap="approvalResultMap">
+     select * from(
+        SELECT distinct mcd.CAMPSEG_ID,
+        mcd.CAMPSEG_NAME,
+        mcd.CREATE_USER_ID,
+        msu.USER_NAME,
+        mcd.CAMP_SCENE,
+        mcd.CREATE_TIME,
+        INST.PROCESS_ID,
+<!--        chnids.CHANNEL_IDS,-->
+        '营销活动' TYPE,
+        RECORD.*,
+        C.DEAL_STATUS AS COMMUNICATION_STATE,
+        mpds.SCENE_ID,
+        ifnull(mpds.SCENE_NAME, '单策略场景') SCENE_NAME
+        FROM (SELECT T.*
+        FROM CMP_APPROVE_PROCESS_RECORD T
+        WHERE (T.DEAL_STATUS = '0' AND T.APPROVER = #{param.userId} AND NOT EXISTS(SELECT 1
+        FROM MCD_APPROVAL_ADVICE
+        WHERE INSTANCE_ID = T.INSTANCE_ID
+        AND NODE_ID = T.NODE_ID
+        AND DEAL_STATUS = '0')
+        and not exists(SELECT 1
+        FROM mcd_batch_approve_record
+        WHERE INSTANCE_ID = T.INSTANCE_ID
+        AND NODE_ID = T.NODE_ID
+        AND STATUS = '0' ))
+        OR EXISTS(SELECT 1
+        FROM MCD_APPROVAL_ADVICE
+        WHERE INSTANCE_ID = T.INSTANCE_ID
+        AND NODE_ID = T.NODE_ID
+        AND APPROVER = #{param.userId}
+        AND DEAL_STATUS = '0') AND T.DEAL_STATUS = '0') RECORD
+        LEFT JOIN (SELECT DEAL_STATUS, INSTANCE_ID, NODE_ID FROM MCD_APPROVAL_ADVICE WHERE DEAL_STATUS = '0') C
+        ON RECORD.INSTANCE_ID = C.INSTANCE_ID and RECORD.NODE_ID = C.NODE_ID
+        LEFT JOIN CMP_APPROVE_PROCESS_INSTANCE INST ON INST.INSTANCE_ID = RECORD.INSTANCE_ID
+        left join mcd_camp_def mcd on INST.BUSINESS_ID = mcd.CAMPSEG_ID
+        left join mcd_sys_user msu on mcd.CREATE_USER_ID = msu.user_id
+        <if test="param.channelId != null and param.channelId != ''">
+            left join mcd_camp_channel_list chan on mcd.CAMPSEG_ID = chan.CAMPSEG_ROOT_ID
+        </if>
+<!--        left join-->
+<!--        (select t.CAMPSEG_ROOT_ID, group_concat(distinct CHANNEL_ID order by CHANNEL_ID) CHANNEL_IDS-->
+<!--        from mcd_camp_channel_list t group by t.CAMPSEG_ROOT_ID ) chnids-->
+<!--         on RECORD.BUSINESS_ID = chnids.CAMPSEG_ROOT_ID-->
+        left join MCD_PRISM_SCENE_CAMP mpsc on RECORD.BUSINESS_ID = mpsc.CAMPSEG_ROOT_ID
+        left join MCD_PRISM_DIM_SCENE mpds on mpds.SCENE_ID = mpsc.SCENE_ID and mpds.LEAF_SCENE_FLAG = 1 and mpds.STATUS = 1
+        WHERE INST.INSTANCE_STATUS != 3 and mcd.CAMPSEG_ID is not null
+
+
+        <if test="param.nodeId != null and param.nodeId != ''">
+            and RECORD.NODE_ID = #{param.nodeId}
+        </if>
+        <if test="param.processId != null and param.processId != ''">
+            and INST.PROCESS_ID =  #{param.processId}
+        </if>
+         <if test="param.campsegName != null and param.campsegName != ''">
+
+            and (mcd.CAMPSEG_NAME like concat('%',#{param.campsegName},'%') or mcd.CAMPSEG_ID like
+            concat('%',#{param.campsegName},'%'))
+        </if>
+
+        <if test="param.channelId != null and param.channelId != ''">
+
+            and chan.CHANNEL_ID = #{param.channelId}
+        </if>
+
+        <if test="param.creator != null and param.creator != ''">
+            and mcd.CREATE_USER_ID = #{param.creator}
+        </if>
+        order by RECORD.CREATE_DATE desc
+        ) temp
+        <if test="param.sceneKey != null and param.sceneKey != ''">
+            where (temp.SCENE_NAME like concat('%',#{param.sceneKey},'%') or temp.SCENE_ID like
+                concat('%',#{param.sceneKey},'%'))
+        </if>
+
+    </select>
+
+    <!--设置别名，统一返回体，查询方式同上面的方法queryCampAppRecord-->
+    <select id="queryCustomSelfDefinedLabel" resultMap="approvalResultMap">
+        SELECT mcld.LABEL_ID      CAMPSEG_ID,
+        concat(mcld.CUSTOM_LABEL_CODE,'/',mcld.CUSTOM_LABEL_NAME)    CAMPSEG_NAME,
+        mcld.CREATE_USER_ID   CREATE_USER_ID,
+        mcld.CREATE_USERNAME USER_NAME,
+        mcld.CREATE_TIME,
+        msc.CITY_NAME            TYPE,
+        RECORD.*,
+        MAA.DEAL_STATUS AS COMMUNICATION_STATE
+        FROM (SELECT CAPR.*
+        FROM CMP_APPROVE_PROCESS_RECORD CAPR
+        WHERE (CAPR.DEAL_STATUS = '0' AND CAPR.APPROVER = #{param.userId} AND NOT EXISTS(SELECT 1
+        FROM MCD_APPROVAL_ADVICE
+        WHERE INSTANCE_ID = CAPR.INSTANCE_ID
+        AND NODE_ID = CAPR.NODE_ID
+        AND DEAL_STATUS = '0'))
+        OR EXISTS(SELECT 1
+        FROM MCD_APPROVAL_ADVICE
+        WHERE INSTANCE_ID = CAPR.INSTANCE_ID
+        AND NODE_ID = CAPR.NODE_ID
+        AND APPROVER = #{param.userId}
+        AND DEAL_STATUS = '0') AND CAPR.DEAL_STATUS = '0') RECORD
+        LEFT JOIN MCD_APPROVAL_ADVICE MAA
+        ON RECORD.INSTANCE_ID = MAA.INSTANCE_ID and RECORD.NODE_ID = MAA.NODE_ID and MAA.DEAL_STATUS = '0'
+        LEFT JOIN CMP_APPROVE_PROCESS_INSTANCE CAPI ON CAPI.INSTANCE_ID = RECORD.INSTANCE_ID
+        left join mcd_custom_label_def mcld on CAPI.BUSINESS_ID = mcld.LABEL_ID
+        left join mcd_sys_city msc on mcld.CITY_ID = msc.CITY_ID
+        WHERE CAPI.INSTANCE_STATUS != 3
+        and mcld.DATA_STATUS = 1
+        <if test="param.campsegName != null and param.campsegName != ''">
+            and (mcld.CUSTOM_LABEL_CODE like concat('%',#{param.campsegName},'%') or mcld.CUSTOM_LABEL_NAME like
+            concat('%',#{param.campsegName},'%'))
+        </if>
+        <if test="param.cityId != null and param.cityId != ''">
+            and mcld.CITY_ID = #{param.cityId}
+        </if>
+        <if test="param.creator != null and param.creator != ''">
+            and mcld.CREATE_USER_ID = #{param.creator}
+        </if>
+        order by RECORD.CREATE_DATE desc
+    </select>
+
+    <select id="queryCustomSelfDefinedAlarm" resultMap="approvalResultMap">
+        SELECT
+<!--        maai.ALARM_ID      CAMPSEG_ID,-->
+<!--        maai.ALARM_NAME    CAMPSEG_NAME,-->
+<!--        maai.CREATE_USER   CREATE_USER_ID,-->
+<!--        msu.USER_NAME,-->
+<!--        maai.CREATE_TIME,-->
+<!--        msd.DIC_NAME            TYPE,-->
+        RECORD.*,
+        MAA.DEAL_STATUS AS COMMUNICATION_STATE
+        FROM (SELECT CAPR.*
+        FROM CMP_APPROVE_PROCESS_RECORD CAPR
+        WHERE (CAPR.DEAL_STATUS = '0' AND CAPR.APPROVER = #{param.userId} AND NOT EXISTS(SELECT 1
+        FROM MCD_APPROVAL_ADVICE
+        WHERE INSTANCE_ID = CAPR.INSTANCE_ID
+        AND NODE_ID = CAPR.NODE_ID
+        AND DEAL_STATUS = '0'))
+        OR EXISTS(SELECT 1
+        FROM MCD_APPROVAL_ADVICE
+        WHERE INSTANCE_ID = CAPR.INSTANCE_ID
+        AND NODE_ID = CAPR.NODE_ID
+        AND APPROVER = #{param.userId}
+        AND DEAL_STATUS = '0') AND CAPR.DEAL_STATUS = '0') RECORD
+        LEFT JOIN MCD_APPROVAL_ADVICE MAA
+        ON RECORD.INSTANCE_ID = MAA.INSTANCE_ID and RECORD.NODE_ID = MAA.NODE_ID and MAA.DEAL_STATUS = '0'
+        LEFT JOIN CMP_APPROVE_PROCESS_INSTANCE CAPI ON CAPI.INSTANCE_ID = RECORD.INSTANCE_ID
+<!--        left join mcd_app_alarm_info maai on CAPI.BUSINESS_ID = maai.ALARM_ID-->
+<!--        left join mcd_sys_user msu on maai.CREATE_USER = msu.user_id-->
+<!--        left join mcd_sys_dic msd on maai.ALARM_TYPE = msd.DIC_VALUE-->
+        WHERE CAPI.INSTANCE_STATUS != 3
+        <if test="alarmIds.size()>0">
+            and CAPI.BUSINESS_ID in
+            <foreach collection="alarmIds" item="alarmId" open="(" close=")" separator=",">
+                #{alarmId,jdbcType=INTEGER}
+            </foreach>
+        </if>
+<!--        and maai.DATA_STATUS = 1-->
+<!--        and msd.dic_profile = 'jx'-->
+<!--        and msd.DIC_KEY like 'YJLX%'-->
+<!--        <if test="param.campsegName != null and param.campsegName != ''">-->
+<!--            and (maai.ALARM_NAME like concat('%',#{param.campsegName},'%') or maai.ALARM_ID like-->
+<!--            concat('%',#{param.campsegName},'%'))-->
+<!--        </if>-->
+<!--        <if test="param.dicKey != null and param.dicKey != ''">-->
+<!--            and msd.DIC_KEY = #{param.dicKey}-->
+<!--        </if>-->
+<!--        <if test="param.creator != null and param.creator != ''">-->
+<!--            and maai.CREATE_USER = #{param.creator}-->
+<!--        </if>-->
+        order by RECORD.CREATE_DATE desc
+    </select>
+
+    <select id="queryApproveNodesByUserId" resultType="com.asiainfo.biapp.pec.approve.jx.dto.ApproveNodeDTO">
+        select distinct capr.NODE_ID, capr.NODE_NAME, capi.PROCESS_ID
+        from cmp_approve_process_record capr
+            <if test="channelId !=null and channelId !='' and channelId !='-1'  ">
+                join (select CAMPSEG_ROOT_ID from mcd_camp_channel_list where CHANNEL_ID = #{channelId} group by CAMPSEG_ROOT_ID) mccl
+                on capr.BUSINESS_ID = mccl.CAMPSEG_ROOT_ID
+            </if>
+             left join cmp_approve_process_instance capi on capr.INSTANCE_ID = capi.INSTANCE_ID
+             left join mcd_camp_def mcd on capr.BUSINESS_ID = mcd.CAMPSEG_ID
+        where capr.NODE_TYPE = 1
+          and capr.APPROVER = #{userId}
+          and DEAL_STATUS = 0
+          and capi.PROCESS_ID is not null
+          and mcd.CAMPSEG_ID is not null
+          and NOT EXISTS(SELECT 1
+                         FROM MCD_APPROVAL_ADVICE
+                         WHERE INSTANCE_ID = capr.INSTANCE_ID
+                           AND NODE_ID = capr.NODE_ID
+                           AND DEAL_STATUS = '0')
+    </select>
+
+</mapper>

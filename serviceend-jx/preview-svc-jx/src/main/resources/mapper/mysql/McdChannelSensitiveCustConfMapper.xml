@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.asiainfo.biapp.pec.preview.jx.mapper.McdChannelSensitiveCustConfMapper">
+
+
+    <select id="querySensitiveCustInfo" resultType="com.asiainfo.biapp.pec.preview.jx.entity.McdChannelSensitiveCustInfo">
+        select
+            mcd.CUSTOM_GROUP_ID   custgroupId,
+            mcd.CUSTOM_GROUP_NAME custgroupName,
+            mcd.CUSTOM_GROUP_DESC custgroupDesc,
+            mcscc.CREATE_USER_ID    createUserId,
+            msu.USER_NAME         createUserName,
+            mcscc.CREATE_TIME       createTime,
+            mcd.ACTUAL_CUSTOM_NUM custNum,
+            mcscc.custgroup_type custgroupType,
+            mcscc.channel_id  channelId,
+            mcscc.channel_name  channelName
+        from (select
+                    custgroup_id,
+                    CREATE_USER_ID,
+                    CREATE_TIME ,
+                    custgroup_type ,
+                    group_concat(channel_id) channel_id,
+                    group_concat(channel_name) channel_name
+              from mcd_channel_sensitive_cust_conf  group by custgroup_id) mcscc
+        left join mcd_custgroup_def mcd on mcscc.custgroup_id = mcd.CUSTOM_GROUP_ID
+        left join mcd_dim_channel mdc on mcscc.channel_id = mdc.CHANNEL_ID
+        left join mcd_sys_user msu on mcd.CREATE_USER_ID = msu.USER_ID
+        where 1 = 1
+        <if test="channelId !=null and channelId != ''">
+            and mcscc.channel_id like  concat('%',#{channelId,jdbcType=VARCHAR},'%')
+        </if>
+
+        <if test="custgroupType != null and custgroupType != ''">
+            and mcscc.custgroup_type = #{custgroupType}
+        </if>
+
+        <if test="keywords !=null and keywords !=''">
+            and (mcd.CUSTOM_GROUP_NAME like  concat('%',#{keywords,jdbcType=VARCHAR},'%')
+                or  mcd.CUSTOM_GROUP_ID like  concat('%',#{keywords,jdbcType=VARCHAR},'%') )
+        </if>
+
+    </select>
+</mapper>
