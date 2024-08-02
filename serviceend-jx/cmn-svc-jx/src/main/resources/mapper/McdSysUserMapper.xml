@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.asiainfo.biapp.cmn.jx.dao.McdSysUserMapper">
-
-    <select id="queryMenuIdsExcluedeThreeMenu" resultType="com.asiainfo.biapp.cmn.model.Menu">
-        select PARENT_ID from mcd_sys_menu a where MENU_ID = (
-            select PARENT_ID from mcd_sys_menu where MENU_ID = #{menuId})
-    </select>
-</mapper>
